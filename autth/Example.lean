@@ -1,4 +1,4 @@
-import Mathlib
+import Mathlib.Computability.RegularExpressions
 
 #check RegularExpression
 
@@ -29,3 +29,5 @@ theorem my_example_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( st
     forall_eq, List.cons_ne_self, not_false_eq_true, and_true, true_and]
   rfl
   simp
+
+#min_imports
