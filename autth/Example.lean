@@ -1,5 +1,11 @@
 import Mathlib.Computability.RegularExpressions
 
+-- a language has a regexp iff it has a DFA
+-- existence and uniqueness of minimal DFA
+-- sum-star equation
+-- product-star equation
+
+
 #check RegularExpression
 
 inductive Alphabet where
