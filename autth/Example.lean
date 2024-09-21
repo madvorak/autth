@@ -4,7 +4,8 @@ import Mathlib.Computability.RegularExpressions
 -- existence and uniqueness of minimal DFA
 -- sum-star equation
 -- product-star equation
-
+-- pumping lemma for linear languages
+-- pumping lemma for context-free languages
 
 #check RegularExpression
 
