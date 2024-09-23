@@ -1,12 +1,5 @@
 import Mathlib.Computability.RegularExpressions
 
--- a language has a regexp iff it has a DFA
--- existence and uniqueness of minimal DFA
--- sum-star equation
--- product-star equation
--- pumping lemma for linear languages
--- pumping lemma for context-free languages
-
 #check RegularExpression
 
 inductive Alphabet where
@@ -15,10 +8,9 @@ inductive Alphabet where
 open Alphabet RegularExpression
 
 #check [a, a, b]
-
 #check comp ( star ( char a ) ) ( star ( char b ) )
 
-/- Example theorem showing that `aab` is in `a*b*`. -/
+/-- Example theorem showing that `aab` is in `a*b*`. -/
 theorem my_example_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( star ( char b ) ) ) := by
   simp
   refine Language.mem_mul.mpr ?_
@@ -37,4 +29,4 @@ theorem my_example_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( st
   rfl
   simp
 
-#min_imports
+-- #min_imports
