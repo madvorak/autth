@@ -113,7 +113,7 @@ theorem my_third_theorem : [a,b] ∈ ( ContextFreeGrammar.language mygrammar ) :
   exact ContextFreeGrammar.Derives.trans fst snd
 
 /-- example theorem showing that aab is not in the language of the grammar S -> ε | aSb -/
-theorem my_fourth_theorem : [a,b] ∈ ( ContextFreeGrammar.language mygrammar ) := by
+theorem my_fourth_theorem : [a,a,b] ∉ ( ContextFreeGrammar.language mygrammar ) := by
  sorry
 
 --#min_imports
