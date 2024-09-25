@@ -6,8 +6,10 @@
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
 
-\begin{theorem}\label{thm:my_example_theorem}
-\lean{my_example_theorem}
+\chapter{Regular expressions}
+
+\begin{theorem}\label{thm:my_first_theorem}
+\lean{my_first_theorem}
 \leanok
 $aab \in a^* b^*$
 \end{theorem}
@@ -16,37 +18,64 @@ $aab \in a^* b^*$
 easy
 \end{proof}
 
+% \begin{theorem}\label{thm:regular_iff_regexp}
+% %\lean{}
+% %\leanok
+% %\uses{}
+% A language is regular iff it has a regular expression.
+% \end{theorem}
+% \begin{proof}
+% %\leanok
+% \uses{lem:regular_impl_regexp,lem:regexp_impl_regular}
+% The text of my proof...
+% \end{proof}
 
-\begin{theorem}\label{thm:regular_iff_regexp}
-%\lean{}
-%\leanok
-%\uses{}
-A language is regular iff it has a regular expression.
+% \begin{lemma}\label{lem:regular_impl_regexp}
+% %\lean{}
+% %\leanok
+% %\uses{}
+% Every regular language has a regular expression.
+% \end{lemma}
+% \begin{proof}
+% %\leanok
+% %\uses{}
+% \end{proof}
+
+% \begin{lemma}\label{lem:regexp_impl_regular}
+% %\lean{}
+% %\leanok
+% %\uses{}
+% Every language that has a regular expression is regular.
+% \end{lemma}
+% \begin{proof}
+% %\leanok
+% %\uses{}
+% \end{proof}
+
+\chapter{Context-free languages}
+
+\begin{definition}\label{def:mygrammar}
+  \lean{mygrammar}
+  \leanok
+Define the context-free grammar $G_1$ as $S \to \varepsilon | a S b$.
+\end{definition}
+
+\begin{theorem}\label{thm:my_second_theorem}
+  \lean{my_second_theorem}
+  \leanok
+  $\varepsilon \in L(G_1)$
 \end{theorem}
 \begin{proof}
-%\leanok
-\uses{lem:regular_impl_regexp,lem:regexp_impl_regular}
-The text of my proof...
+  \leanok
+  easy
 \end{proof}
 
-\begin{lemma}\label{lem:regular_impl_regexp}
-%\lean{}
-%\leanok
-%\uses{}
-Every regular language has a regular expression.
-\end{lemma}
+\begin{theorem}\label{thm:my_third_theorem}
+  \lean{my_third_theorem}
+  \leanok
+  $ab \in L(G_1)$
+\end{theorem}
 \begin{proof}
-%\leanok
-%\uses{}
-\end{proof}
-
-\begin{lemma}\label{lem:regexp_impl_regular}
-%\lean{}
-%\leanok
-%\uses{}
-Every language that has a regular expression is regular.
-\end{lemma}
-\begin{proof}
-%\leanok
-%\uses{}
+  \leanok
+  easy
 \end{proof}
