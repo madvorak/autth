@@ -1,0 +1,110 @@
+\chapter{Pushdown Automata}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{10pt}
+
+\begin{definition}
+  \label{def:PDA}
+  \lean{PDA}
+  A Pushdown Automaton (PDA) is a Tuple $(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$ where
+  \begin{enumerate}
+    \item $Q$ is the finite set of \emph{states}
+    \item $\Sigma$ is the alphabet of the input
+    \item $\Gamma$ is the alphabet of the \emph{stack}
+    \item $\delta : Q\times(\Sigma\cup\{\varepsilon\})\times\Gamma\to\mathcal{P}(Q\times\Gamma^*)$
+      is the \emph{transition function}, fullfilling $|\delta(q,a,Z)|<\infty$ forall $q\in Q$,
+      $a\in\Sigma$ and $Z \in \Gamma$
+    \item $q_0\in Q$ is the \emph{initial state}
+    \item $Z_0 \in \Gamma$ is the \emph{start symbol}
+    \item $F\subseteq Q$ are the \emph{final states}
+  \end{enumerate}
+\end{definition}
+
+\begin{definition}
+  \label{def:PDA_conf}
+  \lean{PDA.conf}
+  We call a Tuple $(q,x,\alpha)\in Q\times\Sigma^*\times\Gamma^*$ a \emph{configuration} of the PDA
+  $(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$.
+
+
+\end{definition}
+\begin{definition}
+  \label{def:PDA_reaches}
+  \lean{PDA.reaches}
+  We say $(q,x,\alpha)\vdash^1(p,y,\beta)$ or configuration $(q,x,\alpha)$ \emph{reaches} $(p,y,\beta)$
+  \emph{in one step} iff there exist $a\in\Sigma\cup\{e\}$, $Z\in\Gamma$
+  and $\nu,\mu \in \Gamma^*$ so that  $x=ay$, $\alpha=Z\nu$,
+  $\beta=\mu\nu$ and $(p,\mu)\in\delta(q,a,Z)$
+
+  For $n\in\mathbb{N}$ fullfilling $n\ge 2$
+  we say $(q,x,\alpha)\vdash^n(p,y,\beta)$ or configuration $(q,x,\alpha)$ \emph{reaches} $(p,y,\beta)$
+  \emph{in $n$ steps} iff there exist $n-1$ configurations $c_i$ so that
+  $(q,x,\alpha)\vdash^1c_1\vdash^1\cdots\vdash^1c_{n-1}\vdash^1(p,y,\beta)$
+  Additionally we say $(q,x,\alpha)\vdash^0(p,y,\beta)$ iff $(q,x,\alpha)=(p,y,\beta)$.
+
+  Finally we say $(q,x,\alpha)\vdash(p,y,\beta)$ or configuration $(q,x,\alpha)$ \emph{reaches}
+  $(p,y,\beta)$ iff there exists $n\in\mathbb{N}$ so that $(q,x,\alpha)\vdash^n(p,y,\beta)$.
+
+\end{definition}
+
+\begin{definition}
+  \label{def:PDA_language}
+  \lean{PDA.acceptsByEmptyStack}
+
+  For a PDA $M$ $(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$ we define $$L(M)=\{w\in\Sigma^*\mid
+  \exists q\in F,\alpha\in\Gamma^*: (q_0,w,Z_0)\vdash(q,\varepsilon,\alpha)\}$$ the
+  \emph {Language of the PDA accepted by final state} and $$N(M)=\{w\in\Sigma^*\mid
+  \exists q\in Q: (q_0,w,Z_0)\vdash(q,\varepsilon,\varepsilon)\}$$ the
+  \emph {Language of the PDA accepted by empty stack}.
+
+\end{definition}
+\begin{theorem}\label{thm:PDA_reaches}
+  %\lean{PDA.trans}
+  The relation $\vdash$ is \emph{reflexiv} and \emph{transitive}.
+\end{theorem}
+\begin{proof}
+  To proof reflexivity use $0$,
+  for transitivity have  $(q,x,\alpha)\vdash(p,y,\beta)$ and
+  $(p,y,\beta)\vdash(r,z,\gamma)$. This means there exist $n,m\in\mathbb{N}$ so that
+  $(q,x,\alpha)\vdash^n(p,y,\beta)$ and $(p,y,\beta)\vdash^m(r,z,\gamma)$.
+  The case $n=0$ or $m=0$ is trivial. Otherwise there exist $n-1$ (possibly $0$) configurations
+  $c_i$ and $m-1$ configurations $\tilde{c}_i$ as in definition \ref{def:PDA_reaches}.
+  Use
+  $$
+  h_i =
+  \begin{cases}
+    c_i          & \text{if } i\le n-1 \\
+    (p,y,\beta) & \text{if } i = n \\
+    \tilde{c}_i  & \text{if } n+1\le i \le n+m-1
+  \end{cases}
+  $$
+  as the $n+m-1$ required configurations.
+\end{proof}
+\begin{theorem}\label{thm:PDA_reaches_input_decreasing}
+  %\lean{PDA.input_decreasing}
+  If $(q,x,\alpha)\vdash(p,y,\beta)$ then $\exists w\in\Sigma^*: x=wy$.
+\end{theorem}
+\begin{proof}
+  Induction
+\end{proof}
+\begin{theorem}\label{thm:PDA_reaches_unconsumed_input}
+  %\lean{PDA.unconsumed_input}
+  If $(q,x,\alpha)\vdash(p,y,\beta)$ then $(q,xw,\alpha)\vdash(p,yw,\beta)$ for
+  every $w\in\Sigma^*$
+\end{theorem}
+\begin{proof}
+  Have $c_i = (q_i,x_i,\alpha_i)$ as in definition \ref{def:PDA_reaches} and use
+  $\tilde{c}_i = (q_i,x_iw,\alpha_i)$
+\end{proof}
+\begin{theorem}\label{thm:PDA_reaches_unconsumed_stack}
+  %\lean{PDA.unconsumed_stack}
+  If $(q,x,\alpha)\vdash(p,y,\beta)$ then $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$ for
+  every $\gamma\in\Gamma^*$
+\end{theorem}
+\begin{proof}
+  Have $c_i = (q_i,x_i,\alpha_i)$ as in definition \ref{def:PDA_reaches} and use
+  $\tilde{c}_i = (q_i,x_i,\alpha_i\gamma)$
+\end{proof}
+\begin{theorem}\label{thm:PDA_empty_stack_of_final_state}
+  %\lean{PDA.empty_stack_of_final_state}
+  Let $M$ be a PDA with $L=L(M)$ then there exists a PDA $M'$ so that $N(M')=L.$
+\end{theorem}
