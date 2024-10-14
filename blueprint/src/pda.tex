@@ -108,3 +108,11 @@
   %\lean{PDA.empty_stack_of_final_state}
   Let $M$ be a PDA with $L=L(M)$ then there exists a PDA $M'$ so that $N(M')=L.$
 \end{theorem}
+\begin{theorem}\label{thm:PDA_of_CFG}
+  %\lean{PDA.PDA_of_CFG}
+  Let $G$ be a CFG with $L=L(G)$ then there exists a PDA $M$ so that $L(M)=L.$
+\end{theorem}
+\begin{theorem}\label{thm:CFG_of_PDA}
+  %\lean{PDA.CFG_of_PDA}
+  Let $M$ be a PDA with $L=N(M)$ then there exists a CFG $G$ so that $L(G)=L.$
+\end{theorem}
