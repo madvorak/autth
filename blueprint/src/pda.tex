@@ -1,7 +1,7 @@
 \chapter{Pushdown Automata}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{10pt}
-
+Everything here is very similiar to Hopcroft and Ullman.
 \begin{definition}
   \label{def:PDA}
   \lean{PDA}
@@ -23,7 +23,7 @@
   \label{def:PDA_conf}
   \lean{PDA.conf}
   We call a Tuple $(q,x,\alpha)\in Q\times\Sigma^*\times\Gamma^*$ a \emph{configuration} of the PDA
-  $(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$.
+  M=$(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$.
 
 
 \end{definition}
@@ -106,8 +106,48 @@
 \end{proof}
 \begin{theorem}\label{thm:PDA_empty_stack_of_final_state}
   %\lean{PDA.empty_stack_of_final_state}
-  Let $M$ be a PDA with $L=L(M)$ then there exists a PDA $M'$ so that $N(M')=L.$
+  Let $M(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$ be a PDA with $L=L(M)$ then there exists a PDA $M'$ so that $N(M')=L.$
 \end{theorem}
+\begin{proof}
+  Let $M$ be a PDA, with language $L=L(M)$ we want to specify a PDA $M'$ so that
+  $N(M')=L$. We define
+  \[
+  M' =(Q\cup\{q_0',q_f\},\Sigma,\Gamma\cup\{Z_0'\},\delta',q_0',Z_0',\{\})
+  \]
+  where
+  \[
+  \delta'(q,a,Z) =
+  \begin{cases}
+    \{(q_0,Z_0Z_0')\} & \text{if } q=q_0'\land a=\varepsilon \land Z=Z_0' \\
+    \{(q_f,\varepsilon)\}\cup\delta(q,a,Z)  & \text{if } q\in F\land a=\varepsilon \\
+    \{(q_f,\varepsilon)\} & \text{if } q=q_f \land a=\varepsilon \\
+    \delta(q,a,Z) & \text{otherwise}
+  \end{cases}
+  \]
+  We show now that $N(M')=L$, for the first inclusion let $w\in L(M)$ arbitrarily.
+  This means by definition
+  \ref{def:PDA_language} $(q_0,w,Z_0)\vdash_M(q,\varepsilon,\alpha)$ for some $q\in F$ and
+  $\alpha\in\Gamma^*$. Recall from \ref{def:PDA_reaches} that this requires the existence
+  of zero or more configurations $c_i=(q_i,x_i,\alpha_i)\in Q\times\Sigma^*\times\Gamma^*$
+  fullfilling
+  $(q_0,w,Z_0)\vdash^1_M c_1\vdash^1_M\cdots\vdash^1_M c_{n-1}\vdash^1_M(q,\varepsilon,\alpha)$.
+  As $\delta\subseteq\delta'$ each of this moves is also valid in $\vdash^1_{M'}$. TODO
+  So we have $(q_0,w,Z_0)\vdash_{M'}(q,\varepsilon,\alpha)$, as $q\in F$ it is clear that
+  $\{(q_f,\varepsilon)\}\in \delta(q,\varepsilon,A)$ where $A$ ist the first symbol of $\alpha$.
+  So we conclude  $(q_0,w,Z_0)\vdash_{M'}(q_f,\varepsilon,\alpha)$.
+  By applying theorem \ref{thm:PDA_reaches_unconsumed_stack} we now know
+  $(q_0,w,Z_0Z_0')\vdash_{M'}(q_f,\varepsilon,\alpha Z_0')$
+  and by $\forall A\in\Gamma^*:\{(q_f,\varepsilon)\}\in\delta(q_f,\varepsilon,A)$ we obtain
+  $(q_0,w,Z_0Z_0')\vdash_{M'}(q_f,\varepsilon,\varepsilon)$. Finally we have
+  $(q_0,Z_0)\in\delta(q_0',\varepsilon,Z_0')$ and this concludes the first direction of
+  the proof. Note that $\alpha$ can not be empty during this computation, as only the rules
+  for $q_f$ pop symbol $Z_0'$.
+
+  
+
+
+\end{proof}
+
 \begin{theorem}\label{thm:PDA_of_CFG}
   %\lean{PDA.PDA_of_CFG}
   Let $G$ be a CFG with $L=L(G)$ then there exists a PDA $M$ so that $L(M)=L.$
