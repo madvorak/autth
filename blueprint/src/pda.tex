@@ -88,7 +88,7 @@ Everything here is very similiar to Hopcroft and Ullman.
 \end{proof}
 \begin{theorem}\label{thm:PDA_reaches_unconsumed_input}
   %\lean{PDA.unconsumed_input}
-  If $(q,x,\alpha)\vdash(p,y,\beta)$ then $(q,xw,\alpha)\vdash(p,yw,\beta)$ for
+  $(q,x,\alpha)\vdash(p,y,\beta)$ iff $(q,xw,\alpha)\vdash(p,yw,\beta)$ for
   every $w\in\Sigma^*$
 \end{theorem}
 \begin{proof}
@@ -97,7 +97,7 @@ Everything here is very similiar to Hopcroft and Ullman.
 \end{proof}
 \begin{theorem}\label{thm:PDA_reaches_unconsumed_stack}
   %\lean{PDA.unconsumed_stack}
-  If $(q,x,\alpha)\vdash(p,y,\beta)$ then $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$ for
+  If $(q,x,\alpha)\vdash(p,y,\beta)$ iff $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$ for
   every $\gamma\in\Gamma^*$
 \end{theorem}
 \begin{proof}
@@ -131,7 +131,7 @@ Everything here is very similiar to Hopcroft and Ullman.
   of zero or more configurations $c_i=(q_i,x_i,\alpha_i)\in Q\times\Sigma^*\times\Gamma^*$
   fullfilling
   $(q_0,w,Z_0)\vdash^1_M c_1\vdash^1_M\cdots\vdash^1_M c_{n-1}\vdash^1_M(q,\varepsilon,\alpha)$.
-  As $\delta\subseteq\delta'$ each of this moves is also valid in $\vdash^1_{M'}$. TODO
+  As $\delta\subseteq\delta'$ each of this moves is also valid in $\vdash^1_{M'}$.
   So we have $(q_0,w,Z_0)\vdash_{M'}(q,\varepsilon,\alpha)$, as $q\in F$ it is clear that
   $\{(q_f,\varepsilon)\}\in \delta(q,\varepsilon,A)$ where $A$ ist the first symbol of $\alpha$.
   So we conclude  $(q_0,w,Z_0)\vdash_{M'}(q_f,\varepsilon,\alpha)$.
@@ -144,7 +144,23 @@ Everything here is very similiar to Hopcroft and Ullman.
   for $q_f$ pop symbol $Z_0'$.
 
 
+  For the other direction let  $w\in N(M')$ arbitrarily. This means again by definition
+  \ref{def:PDA_language} $(q_0',w,Z_0')\vdash_M(q,\varepsilon,\varepsilon)$ for some $q\in Q$.
+  So again we have $c_i=(q_i,x_i,\alpha_i)\in Q\times\Sigma^*\times\Gamma^*$ with
+  $(q_0',w,Z_0')\vdash^1_{M'} c_1\vdash^1_{M'}\cdots\vdash^1_{M'} c_{n-1}\vdash^1_{M'}(q,\varepsilon,\alpha)$.
 
+  We need some facts about the computation of $M'$. Namely the first step is always
+  $(q_0',w,Z_0')\vdash^1_{M'} (q_0,w,Z_0Z_0')$ so we know that $c_1=(q_0,w,Z_0Z_0')$.
+  Similarily the last step is alway
+  $(q_f',\varepsilon,Z_0')\vdash^1_{M'} (q_f,\varepsilon,\varepsilon)$
+  so again we know that $c_{n-1}=(q_f,\varepsilon,Z_0')$. Now with induction we can
+  show that there exists $m\in\mathbb{N}$ and $\alpha\in\Gamma^*$ so that $m\le n-1$ and
+  $c_{m}=(q,\varepsilon,\alpha Z_0')\vdash(q_f,\varepsilon,Z_0')$ and $q\neq q_f$.
+  This means $c_{m}$ is the last step of the computation before empting the stack.
+  By applying theorem \ref{thm:PDA_reaches_unconsumed_stack} we receive
+  $(q_0,w,Z_0)\vdash_{M'}(q,\varepsilon,\alpha)$. Now this computation is
+  also valid in $M$, as none of the states $q_0'$ or $q_f$ can be reached inbetween.
+  This proves $w\in\L(M)$.
 
 \end{proof}
 
@@ -152,7 +168,13 @@ Everything here is very similiar to Hopcroft and Ullman.
   %\lean{PDA.PDA_of_CFG}
   Let $G$ be a CFG with $L=L(G)$ then there exists a PDA $M$ so that $L(M)=L.$
 \end{theorem}
+\begin{proof}
+  As in Sipser
+\end{proof}
 \begin{theorem}\label{thm:CFG_of_PDA}
   %\lean{PDA.CFG_of_PDA}
   Let $M$ be a PDA with $L=N(M)$ then there exists a CFG $G$ so that $L(G)=L.$
 \end{theorem}
+\begin{proof}
+  As in Hopcroft, Ullman
+\end{proof}
