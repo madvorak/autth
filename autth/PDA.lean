@@ -74,6 +74,23 @@ theorem reachesN_of_add_one  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}
   simp [reachesN, stepSetN, stepSet] at *
   use r₂
 
+theorem reachesN_add_one_iff_exists_step_inbetween  {r₁ : conf pda}{r₂ : conf pda}{n : ℕ}:
+        (∃c:conf pda, (reachesN n r₁ c)∧(reachesN 1 c r₂)) ↔ reachesN (n+1) r₁ r₂ := by
+  constructor
+  · intro h
+    obtain ⟨c,h⟩ := h
+    exact reachesN_of_add_one h.1 h.2
+  · intro h
+    simp [reachesN, stepSetN,stepSet] at h
+    obtain ⟨c,h⟩ := h
+    use c
+    constructor
+    · rw [reachesN]
+      exact h.1
+    · simp [reachesN,stepSet,stepSetN]
+      exact h.2
+
+
 theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m : ℕ}
         (h₁:reachesN n r₁ r₂)(h₂:reachesN m r₂ r₃):∃k≤n+m, reachesN (k) r₁ r₃ := by
   induction' m with m ih generalizing r₃
@@ -98,6 +115,11 @@ theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m 
     linarith
     exact reachesN_of_add_one h.2 c_reaches_r₃
 
+theorem reachesN_one  {r₁ : conf pda}{r₂ : conf pda}
+        (h:reachesN 1 r₁ r₂):  r₂∈ step r₁ := by
+  simp [stepSet,stepSetN,reachesN] at h
+  assumption
+
 theorem reaches_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}
         (h₁:reaches r₁ r₂)(h₂:reaches r₂ r₃): reaches r₁ r₃ := by
   rw [reaches] at *
@@ -107,3 +129,45 @@ theorem reaches_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}
   rcases reachesN_trans h h' with ⟨k,h⟩
   use k
   exact h.2
+
+theorem decreasing_input_one {r₁ : conf pda}{r₂ : conf pda}(h:reachesN 1 r₁ r₂) :
+        ∃w : List T, r₁.input = w ++ r₂.input := by
+  apply reachesN_one at h
+  rcases r₁ with ⟨q,_|⟨a,w⟩,_|⟨Z,β⟩⟩
+  · simp [PDA,conf,step] at *
+    rw [h]
+  · simp [PDA,conf,step] at *
+    obtain ⟨_,_,h⟩ := h
+    rw [h.2]
+  · simp [PDA,conf,step] at *
+    rw [h]
+    simp [PDA]
+  · simp [PDA,conf,step] at *
+    rcases h with h|h
+    · obtain ⟨p,β,h⟩ := h
+      rw [h.2]
+      simp
+      use [a]
+      simp
+    · obtain ⟨p,β,h⟩ := h
+      rw [h.2]
+      simp
+
+theorem decreasing_input {r₁ : conf pda}{r₂ : conf pda}(h:reaches r₁ r₂) :
+        ∃w : List T, r₁.input = w ++ r₂.input := by
+  rw [reaches] at h
+  obtain ⟨n,h'⟩ := h
+  rw [←reachesN] at h'
+  induction' n with n ih generalizing r₂
+  · simp [reachesN, stepSetN, stepSet, step] at h'
+    use []
+    rw [h']
+    simp
+  · apply reachesN_add_one_iff_exists_step_inbetween.mpr at h'
+    obtain ⟨c,h',h''⟩ := h'
+    apply ih at h'
+    apply decreasing_input_one at h''
+    obtain ⟨w₁,hw₁⟩ :=  h'
+    obtain ⟨w₂,hw₂⟩ :=  h''
+    use w₁++w₂
+    simp [hw₁,hw₂]
