@@ -86,9 +86,8 @@ Everything here is very similiar to Hopcroft and Ullman.
   Induction
 \end{proof}
 \begin{theorem}\label{thm:PDA_reaches_unconsumed_input}
-  %\lean{PDA.unconsumed_input}
-  $(q,x,\alpha)\vdash(p,y,\beta)$ iff $(q,xw,\alpha)\vdash(p,yw,\beta)$ for
-  every $w\in\Sigma^*$
+  \lean{PDA.unconsumed_input}
+  For every $w\in\Sigma^*$ we have $(q,x,\alpha)\vdash(p,y,\beta)$ iff $(q,xw,\alpha)\vdash(p,yw,\beta)$
 \end{theorem}
 \begin{proof}
   Have $c_i = (q_i,x_i,\alpha_i)$ as in definition \ref{def:PDA_reaches} and use
@@ -96,8 +95,8 @@ Everything here is very similiar to Hopcroft and Ullman.
 \end{proof}
 \begin{theorem}\label{thm:PDA_reaches_unconsumed_stack}
   %\lean{PDA.unconsumed_stack}
-  If $(q,x,\alpha)\vdash(p,y,\beta)$ iff $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$ for
-  every $\gamma\in\Gamma^*$
+  For   every $\gamma\in\Gamma^*$ we have $(q,x,\alpha)\vdash(p,y,\beta)$ iff
+  $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$.
 \end{theorem}
 \begin{proof}
   Have $c_i = (q_i,x_i,\alpha_i)$ as in definition \ref{def:PDA_reaches} and use
