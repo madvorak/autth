@@ -23,6 +23,16 @@ structure conf
   input : List T
   stack : List S
 
+namespace conf
+
+def appendInput  {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(x : List T): conf pda :=
+  ⟨r.state,r.input++x,r.stack⟩
+
+def appendStack  {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(β : List S): conf pda :=
+  ⟨r.state,r.input,r.stack++β⟩
+
+end conf
+
 def step {Q T S : Type} {pda : PDA Q T S} (r₁ : conf pda) : Set (conf pda) :=
   match r₁ with
     | ⟨q,a::w,Z::α⟩ =>
@@ -171,3 +181,128 @@ theorem decreasing_input {r₁ : conf pda}{r₂ : conf pda}(h:reaches r₁ r₂)
     obtain ⟨w₂,hw₂⟩ :=  h''
     use w₁++w₂
     simp [hw₁,hw₂]
+
+
+theorem append_cancel (v x w: List T) (a:T)
+      : v ++ x = a :: w ++ x ↔ v = a :: w := by
+  constructor
+  · intro h
+    rw [List.append_eq_append_iff] at h
+    rcases h with h|h
+    · obtain ⟨a',h'⟩ := h
+      have := List.append_left_eq_self.mp h'.2.symm
+      rw [this] at h'
+      simp at h'
+      exact h'.symm
+    · obtain ⟨a',h'⟩ := h
+      have := List.append_left_eq_self.mp h'.2.symm
+      rw [this] at h'
+      simp at h'
+      exact h'
+  · intro h; rw [h]
+
+theorem unconsumed_input_one {r₁ : conf pda}{r₂ : conf pda}:
+      ∀x:List T, reachesN 1 r₁ r₂ ↔ reachesN 1 (r₁.appendInput x) (r₂.appendInput x) := by
+  intro x
+  constructor
+  case mp =>
+    intro h
+    rcases r₂ with ⟨p,v,α⟩
+    rcases r₁ with ⟨q,_|⟨a,w⟩,_|⟨Z,β⟩⟩ <;>
+    simp [reachesN,conf.appendInput,stepSetN,stepSet,step] at *
+    · assumption
+    · rcases x with _|⟨a,w⟩
+      · simp
+        assumption
+      · simp
+        right
+        assumption
+    · simp [h]
+    · rw [←List.cons_append]
+      rw [append_cancel]
+      exact h
+  case mpr =>
+    intro h
+    rcases r₂ with ⟨p,v,α⟩
+    rcases r₁ with ⟨q,_|⟨a,w⟩,_|⟨Z,β⟩⟩ <;>
+    simp [reachesN,conf.appendInput,stepSetN,stepSet,step] at *
+    · assumption
+    · rcases x with _|⟨a,w⟩
+      · simp at h; assumption
+      · simp at h
+        rcases h with h|h
+        · obtain ⟨p,β,h⟩ := h
+          have := h.2.2.1
+          have : (v ++ a :: w).length = w.length := by rw[this]
+          rw  [List.length_append,List.length_cons] at this
+          linarith
+        · assumption
+    · rw [←List.cons_append,append_cancel] at h
+      assumption
+    · rw [←List.cons_append,append_cancel] at h
+      assumption
+
+theorem unconsumed_input_N {n:ℕ} {r₁ : conf pda}{r₂ : conf pda}:
+      ∀x:List T, reachesN n r₁ r₂ ↔ reachesN n (r₁.appendInput x) (r₂.appendInput x) := by
+  intro x
+  constructor
+  case mp =>
+    induction' n with n ih generalizing r₁ r₂
+    case zero =>
+      intro h
+      simp [reachesN,stepSetN] at h
+      rw [h]
+      simp [reachesN, stepSetN]
+    case succ =>
+      intro h
+      apply reachesN_add_one_iff_exists_step_inbetween.mpr at h
+      obtain ⟨c,h'⟩ := h
+      have : reachesN n (r₁.appendInput x) (c.appendInput x) := ih h'.1
+      apply And.right at h'
+      rw [unconsumed_input_one x] at h'
+      rw [←reachesN_add_one_iff_exists_step_inbetween]
+      use c.appendInput x
+  case mpr =>
+    induction' n with n ih generalizing r₁ r₂
+    · simp [reachesN, stepSetN]
+      intro h
+      rcases r₁ with ⟨p₁,x₁,α₁⟩
+      rcases r₂ with ⟨p₂,x₂,α₂⟩
+      simp [conf.appendInput] at *
+      assumption
+    · intro h
+      rw [←reachesN_add_one_iff_exists_step_inbetween] at *
+      obtain ⟨c,h⟩ := h
+      have := decreasing_input_one h.2
+      obtain ⟨w,h'⟩ := this
+      set c' : conf pda := ⟨c.state,w++r₂.input,c.stack⟩ with def_c'
+      have : c'.appendInput x = c := by
+        rcases c with ⟨q,l,β⟩
+        simp [def_c',h',conf.appendInput,conf] at *
+        exact h'.symm
+      rw [←this] at h
+      use c'
+      constructor
+      · apply ih
+        exact h.1
+      · apply (unconsumed_input_one x).mpr
+        exact h.2
+
+theorem unconsumed_input {r₁ : conf pda}{r₂ : conf pda}:
+      ∀x:List T, reaches r₁ r₂ ↔ reaches (r₁.appendInput x) (r₂.appendInput x) := by
+  intro x
+  constructor
+  · intro h
+    rw [reaches] at *
+    obtain ⟨n,h'⟩ := h
+    use n
+    rw [←reachesN] at *
+    apply (unconsumed_input_N x).mp
+    assumption
+  · intro h
+    rw [reaches] at *
+    obtain ⟨n,h'⟩ := h
+    use n
+    rw [←reachesN] at *
+    apply (unconsumed_input_N x).mpr
+    assumption
