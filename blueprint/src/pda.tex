@@ -166,10 +166,80 @@ Everything here is very similiar to Hopcroft and Ullman.
 
 \begin{theorem}\label{thm:PDA_of_CFG}
   %\lean{PDA.PDA_of_CFG}
-  Let $G$ be a CFG with $L=L(G)$ then there exists a PDA $M$ so that $L(M)=L.$
+  Let $G$ be a CFG with $L=L(G)$ then there exists a PDA $M$ so that $N(M)=L.$
 \end{theorem}
 \begin{proof}
-  As in Sipser
+  Let $G=(N,T,P,S)$ be a context free grammar. We construct a PDA $M$, and show
+  N(M)=L(G). So $M=(Q,\Sigma,\Gamma,\delta,q_0,Z_0,F)$ is defined as follows:
+  \[
+    Q=\{q_0\} \qquad \Sigma = T \qquad \Gamma = T \cup N \qquad Z_0=S  \qquad F=\emptyset
+  \]
+  \[
+    \delta(q_0,a,Z) =  \begin{cases}
+      \{(q_0,\beta)\mid  Z\to\beta\in P\} & \text{if} \quad a=\varepsilon \land Z\in N \\
+      \{(q_0,\varepsilon)\} & \text{if} \quad a\in T \land Z\in T \land a=Z \\
+    \end{cases}
+  \]
+  We show now L(G)=N(M). So let $w\in L(G)$ be arbitrary. So we know there exists a sequence
+  of leftmost derivations
+  \[
+    S \Rightarrow_G^1 \alpha_1 \Rightarrow_G^1 \cdots \Rightarrow_G^1 \alpha_n \Rightarrow_G^1 w
+  \]
+  by induction on the number of steps we show that there exists a computation
+  \[
+    (q_0,w,S) \vdash_M^1 c_1 \vdash_M^1 \cdots \vdash_M^1 c_m \vdash_M^1
+    (q_0,\varepsilon,\varepsilon).
+  \]
+  We need however a slightly stronger induction hypothesis, instead of $S$ we will work
+  with $\alpha \in (N\cup T)^*$ and $w \in T^*$.
+  For the base case we have $\alpha \Rightarrow_G^1 w$ this means in $\alpha$ is exactly one
+  nonterminal, so $\alpha=w_1Aw_2$, $w=w_1vw_2$ and  $A\to v\in P$.
+  Per construction of $M$ we know $(q_0,v)\in\delta(q_0,\varepsilon,A)$ so
+  $(q_0,vw_2,Aw_2)\vdash_M^1(q_0,vw_2,vw_2)$. By repeatedly applying $(q_0,a)\in\delta(q_0,a,a)$
+  we also have $(q_0,w_1vw_2,w_1Aw_2)\vdash_M^1(q_0,vw_2,Aw_2)$ and
+  $(q_0,vw_2,vw_2)\vdash_M^1(q_0,\varepsilon,\varepsilon)$. By transitivity and because of
+  $\alpha = w_1Aw_2$ aswell as $w=w_1Aw_2$ we conclude the base case.
+  Now assuming  $\alpha \Rightarrow_G^n w \quad\Longrightarrow \quad(q_0,w,\alpha)\vdash_M
+  (q_0,\varepsilon,\varepsilon)$, we want to show the same for  $\alpha \Rightarrow_G^{n+1} w$.
+  If $\alpha \Rightarrow_G^{n+1} w$ we know there exists a $\alpha_1 \in  (N\cup T)^*$ so that
+  \[
+    \alpha \Rightarrow_G^1 \alpha_1 \Rightarrow_G^n w.
+  \]
+  Because $\alpha \Rightarrow_G^1 \alpha_1$
+  we can write $\alpha = w_1A\alpha'$ and  $\alpha_1 = w_1\beta\alpha_1'$ where $w_1\in T^*$,
+  $\alpha',\alpha_1',\beta\in (N\cup T)^*$ and $A\to\beta \in P.$  This of course implies
+  $w=w_1w'$ for some $w'\in T^*$.
+  Similarily as in the base case
+  we can now show $(q_0,w_1w',w_1A\alpha')\vdash_M(q_0,w',\beta\alpha')$. Now it suffices to show
+  $(q_0,w',\beta\alpha')\vdash_M(q_0,\varepsilon,\varepsilon)$. As  $\alpha_1 \Rightarrow_G^n w$
+  and $\alpha_1 = w_1\beta\alpha_1'$, $w=w_1w'$ we see that $\beta\alpha_1'\Rightarrow_G^m w'$ for some
+  $m\le n$. By applying the induction hypothesis we have that $(q_0,w',\beta\alpha_1')\vdash_M(q_0,\varepsilon,\varepsilon)$.
+  This concludes the induction and with $\alpha=S$ the first half of the proof.
+
+  For the other direction let again $w\in T^*$ be arbitrary, we again show by induction
+  on the number of computation steps $(q_0,w,\alpha)\vdash_M^n(q_0,\varepsilon,\varepsilon)$
+  implies $\alpha \Rightarrow_G w$ for every $w\in T^*, \alpha \in (T\cup N)^*$.
+  For the base case we have $(q_0,w,\alpha)\vdash_M^1(q_0,\varepsilon,\varepsilon)$. There
+  are only to possiblities for this computation,
+  either $w=\varepsilon$ and $\alpha = A\in N$ with $A\to\varepsilon\in P$ or $w=a\in T$
+  and $\alpha=a$. Anyway we see $\alpha \Rightarrow_G w$. For the induction step
+  we assume $(q_0,w,\alpha)\vdash_M^n(q_0,\varepsilon,\varepsilon)\quad\Longrightarrow \quad
+  \alpha \Rightarrow_G w$ and $(q_0,w,\alpha)\vdash_M^{n+1}(q_0,\varepsilon,\varepsilon)$.
+  So
+  \[
+    (q_0,w,\alpha)\vdash_M^1(q_0,w',\alpha_1)\vdash_M^n(q_0,\varepsilon,\varepsilon).
+  \]
+  Obviously there exists $w_1\in T^*$ so that $w=w_1w'$. By the induction hypothesis
+  we have $\alpha_1 \Rightarrow_G w'$. We distinguish  two possibly cases for the first
+  computation step: Either there are $A\in N$ and $\beta \in (T\cup N)^*$ so that
+  $w=w'$ (that is $w_1=\varepsilon$), $\alpha=A\alpha'$,
+  $\alpha_1=\beta\alpha'$ and $A\to\beta\in P$ or $w=aw'$, $\alpha=a\alpha_1$. In the first
+  case we have $\alpha \Rightarrow_G \alpha_1$ and as already established
+  $\alpha_1 \Rightarrow_G w'=w$. So $\alpha \Rightarrow_G w$. In the second case
+  we have $\alpha = a \alpha' \Rightarrow_G a w' = w.$ So in either case we have the desired result.
+  By applying this to $S\Rightarrow_G w$ we have $L(G)\subseteq N(M)$.
+
+
 \end{proof}
 \begin{theorem}\label{thm:CFG_of_PDA}
   %\lean{PDA.CFG_of_PDA}
