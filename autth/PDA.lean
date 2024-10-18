@@ -390,9 +390,35 @@ theorem reachesN_iff {r₁ : conf pda}{r₂ : conf pda} {n:ℕ}(hn:0<n): reaches
         exact this
         exact cₙr₂
 
-theorem reaches_iff {r₁ : conf pda}{r₂ : conf pda} (h: r₁≠r₂): reaches r₁ r₂ ↔
-      ∃(n:ℕ)(c : Fin (n+1) → conf pda), reachesN 1 r₁ (c 0) ∧
-      (∀i:Fin n,  reachesN 1 (c i) (c (i+1))) ∧ c n = r₂ := by sorry
+theorem reaches_iff {r₁ : conf pda}{r₂ : conf pda}(h:r₁≠r₂): reaches r₁ r₂ ↔
+    ∃(n:ℕ)(c : ℕ → conf pda), reachesN 1 r₁ (c 0) ∧
+    (∀i<n-1 ,  reachesN 1 (c i) (c (i+1))) ∧ c (n-1) = r₂ := by
+  have : ∀n, reachesN n r₁ r₂ → n>0 := by
+    contrapose h
+    simp at h
+    simp [h,reachesN,stepSetN] at h
+    simp [h.symm]
+  constructor
+  case mp =>
+    intro h
+    rw [reaches] at h
+    obtain ⟨n,h'⟩ := h
+    rw [←reachesN] at h'
+    rw [reachesN_iff] at h'
+    obtain ⟨c,h''⟩ := h'
+    use n, c
+    exact this n h'
+  case mpr =>
+    intro h
+    obtain ⟨n,h'⟩ :=  h
+    rw [←reachesN_iff] at h'
+    rw [reaches]
+    use n
+    have : n>0 := by exact this n h'
+    rwa [←reachesN]
+    
+
+
 
 theorem unconsumed_stack_one {r₁ : conf pda}{r₂ : conf pda}(hr₁s : r₁.stack ≠ List.nil):
       ∀γ:List S, reachesN 1 r₁ r₂ ↔ reachesN 1 (r₁.appendStack γ) (r₂.appendStack γ) := by
