@@ -31,6 +31,12 @@ def appendInput  {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(x : List T): conf
 def appendStack  {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(β : List S): conf pda :=
   ⟨r.state,r.input,r.stack++β⟩
 
+def stackPostfix' {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(β : List S): Prop :=
+  ∃α:List S, r.stack = α++β
+
+def stackPostfix {Q T S: Type} {pda : PDA Q T S}(r : conf pda)(β : List S): Prop :=
+  ∃α:List S, α.length > 0 ∧ r.stack = α++β
+
 end conf
 
 def step {Q T S : Type} {pda : PDA Q T S} (r₁ : conf pda) : Set (conf pda) :=
@@ -51,10 +57,6 @@ def stepSetN {Q T S : Type} {pda : PDA Q T S} (n : ℕ) (R : Set (conf pda))  : 
   match n with
   | 0 => R
   | Nat.succ m => stepSet (stepSetN m R)
-
-
-/-def stepRel {Q T S : Type} {pda : PDA Q T S} (r₁ : PDA_id pda)(r₂ : PDA_id pda) : Prop :=
-  r₂ ∈ step r₁-/
 
 inductive reaches' {Q T S : Type} {pda : PDA Q T S}  : conf pda→ conf pda→Prop :=
   | base : (r₁ : conf pda) → reaches' r₁ r₁
@@ -100,7 +102,6 @@ theorem reachesN_add_one_iff_exists_step_inbetween  {r₁ : conf pda}{r₂ : con
     · simp [reachesN,stepSet,stepSetN]
       exact h.2
 
-
 theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m : ℕ}
         (h₁:reachesN n r₁ r₂)(h₂:reachesN m r₂ r₃):∃k≤n+m, reachesN (k) r₁ r₃ := by
   induction' m with m ih generalizing r₃
@@ -126,12 +127,11 @@ theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m 
     exact reachesN_of_add_one h.2 c_reaches_r₃
 
 theorem reachesN_one  {r₁ : conf pda}{r₂ : conf pda}:
-        (reachesN 1 r₁ r₂)↔r₂∈ step r₁ := by
+        (reachesN 1 r₁ r₂) ↔ r₂∈ step r₁ := by
   constructor <;>
   intro h <;>
   simp [stepSet,stepSetN,reachesN] at * <;>
   assumption
-
 
 theorem reaches_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}
         (h₁:reaches r₁ r₂)(h₂:reaches r₂ r₃): reaches r₁ r₃ := by
@@ -186,7 +186,7 @@ theorem decreasing_input {r₁ : conf pda}{r₂ : conf pda}(h:reaches r₁ r₂)
     simp [hw₁,hw₂]
 
 
-theorem append_cancel (v x w: List T)
+private theorem append_cancel (v x w: List T)
       : v ++ x =  w ++ x ↔ v = w := by
   constructor
   · intro h
@@ -324,7 +324,6 @@ theorem reachesN_one_iff {r₁ : conf pda}{r₂ : conf pda}: reachesN 1 r₁ r�
     convert h'.1
     tauto
 
-
 theorem reachesN_iff {r₁ : conf pda}{r₂ : conf pda} {n:ℕ}(hn:0<n): reachesN n r₁ r₂ ↔
      ∃c : ℕ → conf pda, reachesN 1 r₁ (c 0) ∧
       (∀i<n-1 ,  reachesN 1 (c i) (c (i+1))) ∧ c (n-1) = r₂ := by
@@ -390,35 +389,37 @@ theorem reachesN_iff {r₁ : conf pda}{r₂ : conf pda} {n:ℕ}(hn:0<n): reaches
         exact this
         exact cₙr₂
 
+theorem reachesN_pos_of_not_self  {r₁ : conf pda}{r₂ : conf pda}{n:ℕ}(h:r₁≠r₂) :
+      reachesN n r₁ r₂ → n>0 := by
+  contrapose h
+  simp at h
+  simp [h,reachesN,stepSetN] at h
+  simp [h.symm]
+
 theorem reaches_iff {r₁ : conf pda}{r₂ : conf pda}(h:r₁≠r₂): reaches r₁ r₂ ↔
     ∃(n:ℕ)(c : ℕ → conf pda), reachesN 1 r₁ (c 0) ∧
-    (∀i<n-1 ,  reachesN 1 (c i) (c (i+1))) ∧ c (n-1) = r₂ := by
-  have : ∀n, reachesN n r₁ r₂ → n>0 := by
-    contrapose h
-    simp at h
-    simp [h,reachesN,stepSetN] at h
-    simp [h.symm]
+    (∀i<n ,  reachesN 1 (c i) (c (i+1))) ∧ c n = r₂ := by
   constructor
   case mp =>
     intro h
     rw [reaches] at h
     obtain ⟨n,h'⟩ := h
     rw [←reachesN] at h'
-    rw [reachesN_iff] at h'
+    have n_pos:n>0 := reachesN_pos_of_not_self h h'
+    rw [reachesN_iff n_pos] at h'
     obtain ⟨c,h''⟩ := h'
-    use n, c
-    exact this n h'
+    use (n-1), c
   case mpr =>
     intro h
     obtain ⟨n,h'⟩ :=  h
-    rw [←reachesN_iff] at h'
+    set m:=n+1 with m_def
+    have m_pos : m>0 := by linarith
+    have : n=m-1 := by simp [m_def]
+    rw [this] at h'
+    rw [←reachesN_iff m_pos] at h'
     rw [reaches]
-    use n
-    have : n>0 := by exact this n h'
-    rwa [←reachesN]
-    
-
-
+    use m
+    rwa[←reachesN]
 
 theorem unconsumed_stack_one {r₁ : conf pda}{r₂ : conf pda}(hr₁s : r₁.stack ≠ List.nil):
       ∀γ:List S, reachesN 1 r₁ r₂ ↔ reachesN 1 (r₁.appendStack γ) (r₂.appendStack γ) := by
@@ -489,5 +490,8 @@ theorem unconsumed_stack_one {r₁ : conf pda}{r₂ : conf pda}(hr₁s : r₁.st
         simp
       rwa [append_cancel] at this
 
-theorem unconsumed_stack_N {n : ℕ}{r₁ : conf pda}{r₂ : conf pda}(hr₁s : r₁.stack ≠ List.nil) := by
-  sorry
+theorem unconsumed_stackN {n : ℕ}{r₁ : conf pda}{r₂ : conf pda}
+    (hr₁s : r₁.stack ≠ List.nil)(hr₂s : r₂.stack ≠ List.nil): ∀γ, reachesN n r₁ r₂ ↔
+    ∃c : ℕ → conf pda, reachesN 1 (r₁.appendStack γ) (c 0) ∧
+      (∀i<n, (c i).stackPostfix γ) ∧
+      (∀i<n-1 ,  reachesN 1 (c i) (c (i+1))) ∧ c (n-1) = r₂.appendStack γ := by sorry
