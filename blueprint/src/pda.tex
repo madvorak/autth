@@ -95,8 +95,10 @@ Everything here is very similiar to Hopcroft and Ullman.
 \end{proof}
 \begin{theorem}\label{thm:PDA_reaches_unconsumed_stack}
   %\lean{PDA.unconsumed_stack}
-  For   every $\gamma\in\Gamma^*$ we have $(q,x,\alpha)\vdash(p,y,\beta)$ iff
-  $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$.
+  For every $\gamma\in\Gamma^*$ we have $(q,x,\alpha)\vdash(p,y,\beta)$ iff
+  $(q,x,\underbrace{\alpha}_{\ne\varepsilon} \gamma)\vdash^1c_1\cdots c_{n-1}\vdash^1(p,y,\beta\gamma)$ where
+  $c_i = (q_i,x_i,\underbrace{\alpha_i}_{\ne \varepsilon} \gamma)$. This means
+  $(q,x,\alpha\gamma)\vdash(p,y,\beta\gamma)$ without "looking" at $\gamma$.
 \end{theorem}
 \begin{proof}
   Have $c_i = (q_i,x_i,\alpha_i)$ as in definition \ref{def:PDA_reaches} and use
