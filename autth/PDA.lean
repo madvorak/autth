@@ -81,17 +81,26 @@ variable {Q T S : Type} {pda : PDA Q T S}
 theorem reaches_refl (r₁ : conf pda) : reaches r₁ r₁ := by
   use 0; simp [stepSetN];
 
-theorem reachesN_of_add_one  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n : ℕ}
+
+theorem reaches_iff_reachesN  {r₁ : conf pda}{r₂ : conf pda}: reaches r₁ r₂ ↔ ∃n:ℕ, reachesN n r₁ r₂ := by
+  simp only [reaches, reachesN]
+
+
+theorem reachesN_of_n_one  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n : ℕ}
         (h₁:reachesN n r₁ r₂)(h₂:reachesN 1 r₂ r₃): reachesN (n+1) r₁ r₃ := by
   simp [reachesN, stepSetN, stepSet] at *
   use r₂
 
-theorem reachesN_add_one_iff_exists_step_inbetween  {r₁ : conf pda}{r₂ : conf pda}{n : ℕ}:
+theorem reachesN_one {r₁ : conf pda}{r₂ : conf pda}: reachesN 1 r₁ r₂ ↔ r₂ ∈ step r₁ := by
+  rw [reachesN,stepSetN,stepSet,stepSetN]
+  simp
+
+theorem reachesN_iff_split_last  {r₁ : conf pda}{r₂ : conf pda}{n : ℕ}:
         (∃c:conf pda, (reachesN n r₁ c)∧(reachesN 1 c r₂)) ↔ reachesN (n+1) r₁ r₂ := by
   constructor
   · intro h
     obtain ⟨c,h⟩ := h
-    exact reachesN_of_add_one h.1 h.2
+    exact reachesN_of_n_one h.1 h.2
   · intro h
     simp [reachesN, stepSetN,stepSet] at h
     obtain ⟨c,h⟩ := h
@@ -101,6 +110,49 @@ theorem reachesN_add_one_iff_exists_step_inbetween  {r₁ : conf pda}{r₂ : con
       exact h.1
     · simp [reachesN,stepSet,stepSetN]
       exact h.2
+
+theorem reachesN_of_one_n  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n : ℕ}
+        (h₁:reachesN 1 r₁ r₂)(h₂:reachesN n r₂ r₃): reachesN (n+1) r₁ r₃ := by
+  induction' n with n ih generalizing r₃
+  case zero =>
+    rw [reachesN,stepSetN] at h₂
+    apply Set.eq_of_mem_singleton at h₂
+    rw [h₂]
+    simp [h₁]
+  case succ =>
+    rw [←reachesN_iff_split_last] at h₂
+    obtain ⟨c,h₂⟩:=h₂
+    have := ih h₂.1
+    rw [←reachesN_iff_split_last]
+    use c
+    exact ⟨this,h₂.2⟩
+
+
+theorem reachesN_iff_split_first  {r₁ : conf pda}{r₂ : conf pda}{n : ℕ}:
+        (∃c:conf pda, (reachesN 1 r₁ c)∧(reachesN n c r₂)) ↔ reachesN (n+1) r₁ r₂ := by
+  constructor
+  case mp =>
+    intro h
+    obtain ⟨c,h⟩ := h
+    apply reachesN_of_one_n h.1
+    exact h.2
+  case mpr =>
+    intro h
+    induction' n with n ih generalizing r₂
+    case zero =>
+      use r₂
+      use h
+      dsimp [reachesN,stepSetN]
+      apply Set.mem_singleton
+    case succ =>
+      rw [←reachesN_iff_split_last] at h
+      obtain ⟨c',hc'⟩:= h
+      have := ih hc'.1
+      obtain ⟨c,hc⟩ := this
+      use c
+      use hc.1
+      apply reachesN_of_n_one hc.2
+      exact hc'.2
 
 theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m : ℕ}
         (h₁:reachesN n r₁ r₂)(h₂:reachesN m r₂ r₃):∃k≤n+m, reachesN (k) r₁ r₃ := by
@@ -124,14 +176,7 @@ theorem reachesN_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}{n m 
     use k+1
     constructor
     linarith
-    exact reachesN_of_add_one h.2 c_reaches_r₃
-
-theorem reachesN_one  {r₁ : conf pda}{r₂ : conf pda}:
-        (reachesN 1 r₁ r₂) ↔ r₂∈ step r₁ := by
-  constructor <;>
-  intro h <;>
-  simp [stepSet,stepSetN,reachesN] at * <;>
-  assumption
+    exact reachesN_of_n_one h.2 c_reaches_r₃
 
 theorem reaches_trans  {r₁ : conf pda}{r₂ : conf pda}{r₃ : conf pda}
         (h₁:reaches r₁ r₂)(h₂:reaches r₂ r₃): reaches r₁ r₃ := by
@@ -176,7 +221,7 @@ theorem decreasing_input {r₁ : conf pda}{r₂ : conf pda}(h:reaches r₁ r₂)
     use []
     rw [h']
     simp
-  · apply reachesN_add_one_iff_exists_step_inbetween.mpr at h'
+  · apply reachesN_iff_split_last.mpr at h'
     obtain ⟨c,h',h''⟩ := h'
     apply ih at h'
     apply decreasing_input_one at h''
@@ -258,12 +303,12 @@ theorem unconsumed_input_N {n:ℕ} {r₁ : conf pda}{r₂ : conf pda}:
       simp [reachesN, stepSetN]
     case succ =>
       intro h
-      apply reachesN_add_one_iff_exists_step_inbetween.mpr at h
+      apply reachesN_iff_split_last.mpr at h
       obtain ⟨c,h'⟩ := h
       have : reachesN n (r₁.appendInput x) (c.appendInput x) := ih h'.1
       apply And.right at h'
       rw [unconsumed_input_one x] at h'
-      rw [←reachesN_add_one_iff_exists_step_inbetween]
+      rw [←reachesN_iff_split_last]
       use c.appendInput x
   case mpr =>
     induction' n with n ih generalizing r₁ r₂
@@ -274,7 +319,7 @@ theorem unconsumed_input_N {n:ℕ} {r₁ : conf pda}{r₂ : conf pda}:
       simp [conf.appendInput] at *
       assumption
     · intro h
-      rw [←reachesN_add_one_iff_exists_step_inbetween] at *
+      rw [←reachesN_iff_split_last] at *
       obtain ⟨c,h⟩ := h
       have := decreasing_input_one h.2
       obtain ⟨w,h'⟩ := this
@@ -341,7 +386,7 @@ theorem reachesN_iff {r₁ : conf pda}{r₂ : conf pda} {n:ℕ}(hn:0<n): reaches
       case succ =>
         simp
         intro h
-        rw [←reachesN_add_one_iff_exists_step_inbetween] at h
+        rw [←reachesN_iff_split_last] at h
         obtain ⟨cₙ,h₁,h₂⟩ := h
         apply ih (Nat.zero_lt_succ n) at h₁
         obtain ⟨c₀,h₀⟩ := h₁
@@ -385,7 +430,7 @@ theorem reachesN_iff {r₁ : conf pda}{r₂ : conf pda} {n:ℕ}(hn:0<n): reaches
           rw [←h'.2.2]
           apply h'.2.1
           norm_num
-        apply reachesN_of_add_one
+        apply reachesN_of_n_one
         exact this
         exact cₙr₂
 
@@ -489,6 +534,7 @@ theorem unconsumed_stack_one {r₁ : conf pda}{r₂ : conf pda}(hr₁s : r₁.st
         rw [←List.append_assoc,this]
         simp
       rwa [append_cancel] at this
+
 
 theorem unconsumed_stackN {n : ℕ}{r₁ : conf pda}{r₂ : conf pda}
     (hr₁s : r₁.stack ≠ List.nil)(hr₂s : r₂.stack ≠ List.nil): ∀γ, reachesN n r₁ r₂ ↔
