@@ -6,8 +6,7 @@ import Mathlib.Util.Delaborators
 import Mathlib.Computability.ContextFreeGrammar
 import Mathlib.Computability.EpsilonNFA
 
--- Martin: Finiteness not required?
-structure PDA (Q T S : Type) where
+structure PDA (Q T S : Type) [Fintype Q][Fintype T][Fintype S]where
   initial_state : Q
   start_symbol : S
   final_states : Set Q
@@ -16,7 +15,7 @@ structure PDA (Q T S : Type) where
 
 namespace PDA
 
-variable {Q T S : Type}
+variable {Q T S : Type}[Fintype Q][Fintype T][Fintype S]
 
 @[ext]
 structure conf (p : PDA Q T S) where
@@ -42,7 +41,6 @@ abbrev stackPostfix (r : conf pda) (β : List S): Prop :=
 
 end conf
 
--- Martin: Do you want a variable `Nil : List T` or a constant `[]` below?
 def step (r₁ : conf pda) : Set (conf pda) :=
   match r₁ with
     | ⟨q, a::w, Z::α⟩ =>
@@ -50,9 +48,9 @@ def step (r₁ : conf pda) : Set (conf pda) :=
                           r₂ = ⟨p, w, (β ++ α)⟩ } ∪
         { r₂ : conf pda | ∃ (p : Q) (β : List S), (p,β) ∈ pda.transition_fun' q Z ∧
                           r₂ = ⟨p, a :: w, (β ++ α)⟩ }
-    | ⟨q, Nil, Z::α⟩ => { r₂ : conf pda | ∃ (p:Q) (β:List S), (p,β) ∈ pda.transition_fun' q Z ∧
-                                          r₂=⟨p, Nil, (β ++ α)⟩ }
-    | ⟨q, w, Nil⟩ => { r₂ : conf pda | r₂ = ⟨q,w,Nil⟩ } -- Empty stack
+    | ⟨q, [], Z::α⟩ => { r₂ : conf pda | ∃ (p:Q) (β:List S), (p,β) ∈ pda.transition_fun' q Z ∧
+                                          r₂=⟨p, [], (β ++ α)⟩ }
+    | ⟨q, w, []⟩ => { r₂ : conf pda | r₂ = ⟨q,w,[]⟩ } -- Empty stack
 
 def stepSet (R : Set (conf pda)) : Set (conf pda) :=
   ⋃ r ∈ R, step r
@@ -385,13 +383,18 @@ theorem reachesN_iff {n : ℕ} (hn : 0 < n) : reachesN n r₁ r₂ ↔
         exact this
         exact cₙr₂
 
--- Martin: The proof below looks weird.
+theorem reachesN_zero : reachesN 0 r₁ r₂ → r₁ = r₂ := by
+  rw [reachesN,stepSetN,Set.mem_singleton_iff]
+  tauto
+
 theorem reachesN_pos_of_not_self {n : ℕ} (h : r₁ ≠ r₂) :
     reachesN n r₁ r₂ → n > 0 := by
-  contrapose h
-  simp at h
-  simp [h,reachesN,stepSetN] at h
-  simp [h.symm]
+  rcases n with _ | ⟨n⟩
+  · intro h
+    apply reachesN_zero at h
+    contradiction
+  · intro _
+    apply Nat.zero_lt_succ
 
 theorem reaches_iff (h : r₁ ≠ r₂) : reaches r₁ r₂ ↔
     ∃ (n : ℕ) (c : ℕ → conf pda), reachesN 1 r₁ (c 0) ∧
