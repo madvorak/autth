@@ -4,7 +4,6 @@ import Mathlib.Tactic
 import Mathlib.Data.List.Join
 import Mathlib.Util.Delaborators
 import Mathlib.Computability.ContextFreeGrammar
-
 import Mathlib.Computability.EpsilonNFA
 
 inductive alph where
@@ -19,40 +18,45 @@ open nt
 open Symbol
 open ContextFreeGrammar
 
-def G : ContextFreeGrammar alph := ⟨nt,S,
-  [⟨S,[]⟩,
-  ⟨nt.S,[terminal a, nonterminal S, terminal b]⟩]⟩
+abbrev a_ : Symbol alph nt := terminal a
+abbrev b_ : Symbol alph nt := terminal b
+abbrev S_ : Symbol alph nt := nonterminal S
+
+def G : ContextFreeGrammar alph := ⟨nt, S, [
+    ⟨S, []⟩,
+    ⟨nt.S, [a_, S_, b_]⟩
+  ]⟩
 
 example : [a,a,b,b] ∈ G.language := by
   rw [mem_language_iff]
   simp
   rw [Derives]
   apply Relation.ReflTransGen.tail
-  case b => exact [terminal a,terminal a,nonterminal S, terminal b,terminal b]
+  case b => exact [a_, a_, S_, b_, b_]
   case a =>
     apply Relation.ReflTransGen.tail
-    case b => exact [terminal a,nonterminal S,terminal b]
+    case b => exact [a_,S_,b_]
     case a =>
       apply Relation.ReflTransGen.tail
-      case b => exact [nonterminal S]
-      case a => rw [ (by rfl :G.initial = S)]
+      case b => exact [S_]
+      case a => rw [(by rfl : G.initial = S)]
       case a =>
-        use ⟨nt.S,[terminal a, nonterminal S, terminal b]⟩
+        use ⟨nt.S, [a_, S_, b_]⟩
         constructor
         · simp [G]
-        · apply (ContextFreeRule.rewrites_iff [nonterminal S] [terminal a, nonterminal S, terminal b]).mpr
+        · apply (ContextFreeRule.rewrites_iff [S_] [a_, S_, b_]).mpr
           use []
           use []
           simp
     case a =>
-      use ⟨nt.S,[terminal a, nonterminal S, terminal b]⟩
+      use ⟨nt.S, [a_, S_, b_]⟩
       constructor
       · simp [G]
-      · apply ContextFreeRule.Rewrites.cons (terminal a)
-        apply ContextFreeRule.Rewrites.head [terminal b]
+      · apply ContextFreeRule.Rewrites.cons (a_)
+        apply ContextFreeRule.Rewrites.head [b_]
   case a =>
-    use ⟨nt.S,[]⟩
+    use ⟨nt.S, []⟩
     simp [G]
-    apply ContextFreeRule.Rewrites.cons (terminal a)
-    apply ContextFreeRule.Rewrites.cons (terminal a)
-    apply ContextFreeRule.Rewrites.head [terminal b, terminal b]
+    apply ContextFreeRule.Rewrites.cons (a_)
+    apply ContextFreeRule.Rewrites.cons (a_)
+    apply ContextFreeRule.Rewrites.head [b_, b_]
