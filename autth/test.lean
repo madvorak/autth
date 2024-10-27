@@ -26,10 +26,10 @@ def G : ContextFreeGrammar alph := ⟨nt, nt.S, [
   ]⟩
 
 example : [alph.a, alph.a, alph.b, alph.b] ∈ G.language := by
-  rw [mem_language_iff, List.map_cons, Derives]
-  apply Relation.ReflTransGen.tail (b := [a, a, S, b, b])
-  · apply Relation.ReflTransGen.tail (b := [a, S, b])
-    · apply Relation.ReflTransGen.tail (b := [S])
+  rw [mem_language_iff, List.map_cons]
+  apply Derives.trans_produces (v := [a, a, S, b, b])
+  · apply Derives.trans_produces (v := [a, S, b])
+    · apply Derives.trans_produces (v := [S])
       · rfl
       · use ⟨nt.S, [a, S, b]⟩
         constructor
@@ -41,10 +41,10 @@ example : [alph.a, alph.a, alph.b, alph.b] ∈ G.language := by
     · use ⟨nt.S, [a, S, b]⟩
       constructor
       · simp [G]
-      · apply ContextFreeRule.Rewrites.cons a
-        apply ContextFreeRule.Rewrites.head [b]
+      · right
+        left
   · use ⟨nt.S, []⟩
     simp [G]
-    apply ContextFreeRule.Rewrites.cons a
-    apply ContextFreeRule.Rewrites.cons a
-    apply ContextFreeRule.Rewrites.head [b, b]
+    right
+    right
+    left
