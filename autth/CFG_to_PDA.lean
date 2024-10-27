@@ -80,6 +80,33 @@ theorem M_consumes_nonterminal {r : ContextFreeRule T G.NT}(h : r ∈ G.rules)(w
     · use r.output
     · rfl
 
+theorem G_rule_of_M_consumes_nonterminal {w w': List T}{α β: List (S G)}{N : G.NT}  :
+    (M G).reachesN 1 ⟨Q.loop, w, nonterminal N :: α⟩ ⟨Q.loop, w', β⟩ →
+    ∃(γ : List (S G)), (⟨N,γ⟩ ∈ G.rules) ∧ β = γ ++ α ∧ w=w':= by
+  intro h
+  rw [reachesN_one] at h
+  rcases w with _ | ⟨a, w'⟩ <;> simp only [step, transition_fun',transition_fun, Set.mem_setOf] at h
+  · obtain ⟨_,γ,hγ, h⟩ := h
+    apply conf.mk.inj at h
+    obtain ⟨γ', hr, hγ'⟩ := hγ
+    apply Prod.mk.inj at hγ'
+    rw [hγ'.2] at hr
+    use γ, hr
+    refine ⟨?_,?_⟩
+    · exact h.2.2
+    · exact h.2.1.symm
+  · rw [Set.mem_union, Set.mem_setOf,Set.mem_setOf] at h
+    rcases h with ⟨_,γ,hγ, h⟩ |  ⟨_,γ,hγ, h⟩
+    · exfalso
+      exact Set.not_mem_empty _ hγ
+    · obtain ⟨γ',hr,hγ'⟩ := hγ
+      rw [show γ'=γ by apply Prod.mk.inj at hγ'; simp [hγ']] at hr
+      use γ, hr
+      apply conf.mk.inj at h
+      refine ⟨?_,?_⟩
+      · exact h.2.2
+      · simp [h]
+
 theorem M_consumes_terminal_string  (w w': List T) (α : List (S G)):
     (M G).reaches ⟨Q.loop, w++w', w.map terminal ++ α⟩ ⟨Q.loop, w', α⟩ := by
   induction' w with a w ih
@@ -216,13 +243,48 @@ theorem M_reaches_off_G_derives (α : List (Symbol T G.NT)) (w : List T)
 theorem G_derives_of_M_reaches {α : List (Symbol T G.NT)} {w : List T}
     (h: (M G).reaches ⟨Q.loop,w,α⟩ ⟨Q.loop,[], []⟩):
     G.Derives α (w.map terminal) := by
-  sorry
+  rw [reaches_iff_reachesN] at h
+  obtain ⟨n,hr⟩ := h
+  induction' n  with n ih generalizing w α
+  · rw [reachesN_zero] at hr
+    apply conf.mk.inj at hr
+    rw [hr.2.1, hr.2.2, List.map_nil]
+  · rw [←reachesN_iff_split_first] at hr
+    obtain ⟨⟨_,w',β⟩, h₁, h₂⟩ :=  hr
+    apply ih at h₂
+    rcases α with _|⟨⟨a⟩|⟨N⟩,α'⟩
+    · apply reaches_of_reachesN at h₁
+      apply reaches_on_empty_stack at h₁
+      rw [←h₁.1,h₁.2] at h₂
+      exact h₂
+    · apply M_deterministic_step_of_terminal_stack_cons at h₁
+      rw [h₁.1,h₁.2]
+      convert ContextFreeGrammar.Derives.append_left h₂ [terminal a]
+    · apply G_rule_of_M_consumes_nonterminal at h₁
+      obtain ⟨γ,hr,hγ,hw⟩ := h₁
+      rw [hw.symm] at h₂
+      have : G.Derives ([nonterminal N] ++ α') β := by
+        have : G.Derives [nonterminal N] γ := by
+          apply Produces.single
+          use ⟨N,γ⟩, hr
+          convert ContextFreeRule.rewrites_of_exists_parts ⟨N,γ⟩ [] []
+          simp
+        convert ContextFreeGrammar.Derives.append_right this α'
+      exact Derives.trans this h₂
 
-theorem G_derives_iff_M_reaches {α : List (Symbol T G.NT)} {w : List T} :
-    G.Derives α (w.map terminal) ↔
-    (M G).reaches ⟨Q.loop,w, α⟩ ⟨Q.loop,[], []⟩ := by
-  sorry
-end section
-
-
-theorem pda_of_cfg (G : ContextFreeGrammar T)[Fintype G.NT] : G.language  = (M G).acceptsByEmptyStack := by sorry
+theorem pda_of_cfg (G : ContextFreeGrammar T)[Fintype G.NT] : G.language  = (M G).acceptsByEmptyStack := by
+  ext w
+  constructor
+  · intro h
+    rw [leftmost_language_eq_language] at h
+    dsimp [leftmost_language] at h
+    rw [Set.mem_setOf] at h
+    apply M_reaches_off_G_derives at h
+    dsimp [acceptsByEmptyStack]
+    use Q.loop
+  · intro h
+    dsimp [acceptsByEmptyStack] at h
+    rw [Set.mem_setOf] at h
+    obtain ⟨_,hr⟩ := h
+    apply G_derives_of_M_reaches at hr
+    simp [hr]
