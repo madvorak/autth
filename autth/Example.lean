@@ -10,55 +10,49 @@ section
 open Alphabet RegularExpression
 
 #check [a, a, b]
-#check comp ( star ( char a ) ) ( star ( char b ) )
+#check comp (star (char a)) (star (char b))
 
 /-- Example theorem showing that `aab` is in `a*b*`. -/
-private theorem my_first_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( star ( char b ) ) ) := by
+private theorem my_first_theorem: [a,a,b] ∈ matches' (comp (star (char a)) (star (char b))) := by
   simp
-  refine Language.mem_mul.mpr ?_
   use [a,a]
   constructor
-  refine Language.mem_kstar_iff_exists_nonempty.mpr ?h.left.a
-  use [[a],[a]]
-  simp
-  rfl
-  use [b]
-  constructor
-  refine Language.mem_kstar_iff_exists_nonempty.mpr ?_
-  use [[b]]
-  simp only [List.join_cons, List.join_nil, List.singleton_append, List.mem_singleton, ne_eq,
-    forall_eq, List.cons_ne_self, not_false_eq_true, and_true, true_and]
-  rfl
-  simp
+  · rw [Language.mem_kstar_iff_exists_nonempty]
+    use [[a],[a]]
+    simp
+    rfl
+  · use [b]
+    constructor
+    · rw [Language.mem_kstar_iff_exists_nonempty]
+      use [[b]]
+      simp only [List.join_cons, List.join_nil, List.singleton_append, List.mem_singleton, ne_eq,
+        forall_eq, List.cons_ne_self, not_false_eq_true, and_true, true_and]
+      rfl
+    simp
 end
 
-private inductive Nonterminals where
-  | S
-
 #check Symbol
-#check ( Symbol Alphabet Nonterminals )
+#check Symbol Alphabet Unit
 
-private abbrev a : Symbol Alphabet Nonterminals := .terminal Alphabet.a
-private abbrev b : Symbol Alphabet Nonterminals := .terminal Alphabet.b
-private abbrev c : Symbol Alphabet Nonterminals := .terminal Alphabet.c
-private abbrev S : Symbol Alphabet Nonterminals := .nonterminal Nonterminals.S
+private abbrev a : Symbol Alphabet Unit := .terminal Alphabet.a
+private abbrev b : Symbol Alphabet Unit := .terminal Alphabet.b
+private abbrev c : Symbol Alphabet Unit := .terminal Alphabet.c
+private abbrev S : Symbol Alphabet Unit := .nonterminal ()
 
-private def mysymbol : ( Symbol Alphabet Nonterminals ) := ( Symbol.terminal Alphabet.a )
-
-private def myfirstrule : ( ContextFreeRule Alphabet Nonterminals ) where
-  input := Nonterminals.S
+private def myfirstrule : ( ContextFreeRule Alphabet Unit ) where
+  input := ()
   output := List.nil
 
-private def mysecondrule : (ContextFreeRule Alphabet Nonterminals) where
-  input := Nonterminals.S
+private def mysecondrule : (ContextFreeRule Alphabet Unit) where
+  input := ()
   output := [a, S, b]
 
 #check ContextFreeGrammar Alphabet
 
 private def mygrammar : ( ContextFreeGrammar Alphabet ) where
-  NT := Nonterminals
-  initial := Nonterminals.S
-  rules := [ myfirstrule, mysecondrule ]
+  NT := Unit
+  initial := ()
+  rules := [myfirstrule, mysecondrule]
 
 #print mygrammar
 #print myfirstrule
@@ -69,7 +63,7 @@ private def mygrammar : ( ContextFreeGrammar Alphabet ) where
 
 /-- example theorem showing that ε is in the language of the grammar S -> ε | aSb -/
 private theorem my_second_theorem : List.nil ∈ mygrammar.language := by
-  apply (ContextFreeGrammar.mem_language_iff mygrammar []).mpr
+  rw [ContextFreeGrammar.mem_language_iff]
   apply ContextFreeGrammar.Produces.single
   use myfirstrule
   constructor
@@ -77,7 +71,6 @@ private theorem my_second_theorem : List.nil ∈ mygrammar.language := by
     simp
   · rw [ContextFreeRule.rewrites_iff]
     use [], []
-    simp
     unfold mygrammar myfirstrule
     simp
 
@@ -92,7 +85,6 @@ private theorem my_third_theorem : [.a, .b] ∈ mygrammar.language := by
       simp
     · rw [ContextFreeRule.rewrites_iff]
       use [], []
-      simp
       unfold mygrammar mysecondrule
       simp
   have snd : mygrammar.Derives [a, S, b] [a, b] := by
@@ -101,8 +93,7 @@ private theorem my_third_theorem : [.a, .b] ∈ mygrammar.language := by
     constructor
     · unfold mygrammar
       simp
-    · apply (ContextFreeRule.rewrites_iff [a, S, b]
-      [a, b]).mpr
+    · rw [ContextFreeRule.rewrites_iff]
       use [a], [b]
       unfold myfirstrule
       simp
