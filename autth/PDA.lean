@@ -85,6 +85,7 @@ def acceptsByFinalState (pda : PDA Q T S) : Language T :=
 private theorem append_cancel (v x w : List T) : v ++ x = w ++ x ↔ v = w := by
   apply List.append_left_inj
 
+@[refl]
 theorem reaches_refl (r₁ : conf pda) : reaches r₁ r₁ := by
   use 0; simp [stepSetN];
 
@@ -383,15 +384,18 @@ theorem reachesN_iff {n : ℕ} (hn : 0 < n) : reachesN n r₁ r₂ ↔
         exact this
         exact cₙr₂
 
-theorem reachesN_zero : reachesN 0 r₁ r₂ → r₁ = r₂ := by
+theorem reachesN_zero : reachesN 0 r₁ r₂ ↔ r₁ = r₂ := by
+  constructor
   rw [reachesN,stepSetN,Set.mem_singleton_iff]
   tauto
+  intro h
+  simp [h, reachesN,stepSetN]
 
 theorem reachesN_pos_of_not_self {n : ℕ} (h : r₁ ≠ r₂) :
     reachesN n r₁ r₂ → n > 0 := by
   rcases n with _ | ⟨n⟩
   · intro h
-    apply reachesN_zero at h
+    apply reachesN_zero.mp at h
     contradiction
   · intro _
     apply Nat.zero_lt_succ
