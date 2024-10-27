@@ -124,4 +124,8 @@ lemma DerivesLeftmost.append_right {v w : List (Symbol T g.NT)}
   | refl => rfl
   | tail _ last ih => exact ih.trans_produces <| last.append_right p
 
+theorem DerivesLeftmost_iff {w : List T}{α : List (Symbol T g.NT)}:
+    g.DerivesLeftmost α (w.map terminal)  ↔ g.Derives α (w.map terminal) := by
+  sorry
+
 end ContextFreeGrammar

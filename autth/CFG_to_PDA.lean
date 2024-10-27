@@ -1,6 +1,5 @@
 import autth.PDA
 import autth.leftmost_deriv
-import autth.leftmost_language
 import Mathlib.Computability.ContextFreeGrammar
 import Mathlib.Logic.Relation
 /-!
@@ -275,9 +274,10 @@ theorem pda_of_cfg (G : ContextFreeGrammar T)[Fintype G.NT] : G.language  = (M G
   ext w
   constructor
   · intro h
-    rw [leftmost_language_eq_language] at h
-    dsimp [leftmost_language] at h
+    dsimp [language] at h
     rw [Set.mem_setOf] at h
+    dsimp [Generates] at h
+    rw [←DerivesLeftmost_iff] at h
     apply M_reaches_off_G_derives at h
     dsimp [acceptsByEmptyStack]
     use Q.loop
