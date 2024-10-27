@@ -12,7 +12,7 @@ open Alphabet RegularExpression
 #check comp ( star ( char a ) ) ( star ( char b ) )
 
 /-- Example theorem showing that `aab` is in `a*b*`. -/
-theorem my_first_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( star ( char b ) ) ) := by
+private theorem my_first_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( star ( char b ) ) ) := by
   simp
   refine Language.mem_mul.mpr ?_
   use [a,a]
@@ -30,19 +30,19 @@ theorem my_first_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) ) ( star
   rfl
   simp
 
-inductive Nonterminals where
+private inductive Nonterminals where
   | S
 
 #check Symbol
 #check ( Symbol Alphabet Nonterminals )
 
-def mysymbol : ( Symbol Alphabet Nonterminals ) := ( Symbol.terminal Alphabet.a )
+private def mysymbol : ( Symbol Alphabet Nonterminals ) := ( Symbol.terminal Alphabet.a )
 
-def myfirstrule : ( ContextFreeRule Alphabet Nonterminals ) where
+private def myfirstrule : ( ContextFreeRule Alphabet Nonterminals ) where
   input := Nonterminals.S
   output := List.nil
 
-def mysecondrule : (ContextFreeRule Alphabet Nonterminals) where
+private def mysecondrule : (ContextFreeRule Alphabet Nonterminals) where
   input := Nonterminals.S
   output := [ ( Symbol.terminal Alphabet.a ) ,
     ( Symbol.nonterminal  Nonterminals.S ),
@@ -50,7 +50,7 @@ def mysecondrule : (ContextFreeRule Alphabet Nonterminals) where
 
 #check ContextFreeGrammar Alphabet
 
-def mygrammar : ( ContextFreeGrammar Alphabet ) where
+private def mygrammar : ( ContextFreeGrammar Alphabet ) where
   NT := Nonterminals
   initial := Nonterminals.S
   rules := [ myfirstrule, mysecondrule ]
@@ -63,7 +63,7 @@ def mygrammar : ( ContextFreeGrammar Alphabet ) where
 #check [a,b]
 
 /-- example theorem showing that ε is in the language of the grammar S -> ε | aSb -/
-theorem my_second_theorem : List.nil ∈ mygrammar.language := by
+private theorem my_second_theorem : List.nil ∈ mygrammar.language := by
   apply (ContextFreeGrammar.mem_language_iff mygrammar []).mpr
   apply ContextFreeGrammar.Produces.single
   use myfirstrule
@@ -79,7 +79,7 @@ theorem my_second_theorem : List.nil ∈ mygrammar.language := by
     simp
 
 /-- example theorem showing that ab is in the language of the grammar S -> ε | aSb -/
-theorem my_third_theorem : [a,b] ∈ mygrammar.language := by
+private theorem my_third_theorem : [a,b] ∈ mygrammar.language := by
   apply (ContextFreeGrammar.mem_language_iff mygrammar [a, b]).mpr
   have fst : mygrammar.Derives [Symbol.nonterminal mygrammar.initial]
     [ ( Symbol.terminal Alphabet.a ) ,
@@ -113,7 +113,7 @@ theorem my_third_theorem : [a,b] ∈ mygrammar.language := by
   exact ContextFreeGrammar.Derives.trans fst snd
 
 /-- example theorem showing that aab is not in the language of the grammar S -> ε | aSb -/
-theorem my_fourth_theorem : [a,a,b] ∉ mygrammar.language := by
+private theorem my_fourth_theorem : [a,a,b] ∉ mygrammar.language := by
  sorry
 
 --#min_imports

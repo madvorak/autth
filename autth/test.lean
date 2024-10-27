@@ -6,21 +6,21 @@ import Mathlib.Util.Delaborators
 import Mathlib.Computability.ContextFreeGrammar
 import Mathlib.Computability.EpsilonNFA
 
-inductive alph where
+private inductive alph where
   | a
   | b
 
-inductive nt where
+private inductive nt where
   | S
 
 open Symbol
 open ContextFreeGrammar
 
-abbrev a : Symbol alph nt := terminal alph.a
-abbrev b : Symbol alph nt := terminal alph.b
-abbrev S : Symbol alph nt := nonterminal nt.S
+private abbrev a : Symbol alph nt := terminal alph.a
+private abbrev b : Symbol alph nt := terminal alph.b
+private abbrev S : Symbol alph nt := nonterminal nt.S
 
-def G : ContextFreeGrammar alph := ⟨nt, nt.S, [
+private def G : ContextFreeGrammar alph := ⟨nt, nt.S, [
     ⟨nt.S, []⟩,
     ⟨nt.S, [a, S, b]⟩
   ]⟩
