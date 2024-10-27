@@ -477,3 +477,30 @@ theorem unconsumed_stackN {n : ℕ} (hr₁s : r₁.stack ≠ []) (hr₂s : r₂.
     ∃ c : ℕ → conf pda, reachesN 1 (r₁.appendStack γ) (c 0) ∧
       (∀ i < n, (c i).stackPostfix γ) ∧
       (∀ i < n - 1, reachesN 1 (c i) (c i.succ)) ∧ c (n-1) = r₂.appendStack γ := by sorry
+
+theorem reachesN_one_on_empty_stack {q p: Q}{w w': List T}{α : List S}:
+    pda.reachesN 1 ⟨q, w, []⟩ ⟨p, w', α⟩ → w=w' ∧ α = [] ∧ q=p:= by
+  intro h
+  rw [reachesN_one] at h
+  simp only [step] at h
+  rw [Set.mem_setOf, conf.mk.injEq] at h
+  simp [h]
+
+theorem reaches_on_empty_stack {q p: Q}{w w': List T}{α : List S}:
+    pda.reaches ⟨q, w, []⟩ ⟨p, w', α⟩ → w=w' ∧ α = [] := by
+  intro h
+  rw [reaches_iff_reachesN] at h
+  obtain ⟨n,hr⟩ := h
+  induction' n with n ih
+  · rw [reachesN_zero,conf.mk.injEq] at hr
+    simp [hr]
+  · rw [←reachesN_iff_split_first] at hr
+    obtain ⟨⟨q',v,α'⟩,h₁,h₂⟩ := hr
+    apply reachesN_one_on_empty_stack at h₁
+    rw  [←h₁.1, h₁.2.1, ←h₁.2.2] at h₂
+    apply ih at h₂
+    simp [h₂]
+
+theorem reaches_of_reachesN  {n: ℕ}(h: pda.reachesN n r₁ r₂) : pda.reaches r₁ r₂ := by
+  rw [reaches_iff_reachesN]
+  use n
