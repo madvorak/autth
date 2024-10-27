@@ -6,6 +6,7 @@ import Mathlib.Computability.RegularExpressions
 inductive Alphabet where
   | a | b | c
 
+section
 open Alphabet RegularExpression
 
 #check [a, a, b]
@@ -29,12 +30,18 @@ private theorem my_first_theorem: [a,a,b] ∈ matches' ( comp ( star ( char a ) 
     forall_eq, List.cons_ne_self, not_false_eq_true, and_true, true_and]
   rfl
   simp
+end
 
 private inductive Nonterminals where
   | S
 
 #check Symbol
 #check ( Symbol Alphabet Nonterminals )
+
+private abbrev a : Symbol Alphabet Nonterminals := .terminal Alphabet.a
+private abbrev b : Symbol Alphabet Nonterminals := .terminal Alphabet.b
+private abbrev c : Symbol Alphabet Nonterminals := .terminal Alphabet.c
+private abbrev S : Symbol Alphabet Nonterminals := .nonterminal Nonterminals.S
 
 private def mysymbol : ( Symbol Alphabet Nonterminals ) := ( Symbol.terminal Alphabet.a )
 
@@ -44,9 +51,7 @@ private def myfirstrule : ( ContextFreeRule Alphabet Nonterminals ) where
 
 private def mysecondrule : (ContextFreeRule Alphabet Nonterminals) where
   input := Nonterminals.S
-  output := [ ( Symbol.terminal Alphabet.a ) ,
-    ( Symbol.nonterminal  Nonterminals.S ),
-    ( Symbol.terminal Alphabet.b ) ]
+  output := [a, S, b]
 
 #check ContextFreeGrammar Alphabet
 
@@ -70,50 +75,41 @@ private theorem my_second_theorem : List.nil ∈ mygrammar.language := by
   constructor
   · unfold mygrammar
     simp
-  · refine (ContextFreeRule.rewrites_iff [Symbol.nonterminal mygrammar.initial]
-      (List.map Symbol.terminal [])).mpr
-      ?h.right.a
+  · rw [ContextFreeRule.rewrites_iff]
     use [], []
     simp
     unfold mygrammar myfirstrule
     simp
 
 /-- example theorem showing that ab is in the language of the grammar S -> ε | aSb -/
-private theorem my_third_theorem : [a,b] ∈ mygrammar.language := by
-  apply (ContextFreeGrammar.mem_language_iff mygrammar [a, b]).mpr
-  have fst : mygrammar.Derives [Symbol.nonterminal mygrammar.initial]
-    [ ( Symbol.terminal Alphabet.a ) ,
-    ( Symbol.nonterminal  Nonterminals.S ),
-    ( Symbol.terminal Alphabet.b ) ] := by
+private theorem my_third_theorem : [.a, .b] ∈ mygrammar.language := by
+  apply (ContextFreeGrammar.mem_language_iff mygrammar [.a, .b]).mpr
+  have fst : mygrammar.Derives [Symbol.nonterminal mygrammar.initial] [a, S, b] := by
     apply ContextFreeGrammar.Produces.single
     use mysecondrule
     constructor
     · unfold mygrammar
       simp
-    · apply (ContextFreeRule.rewrites_iff [Symbol.nonterminal mygrammar.initial]
-        [Symbol.terminal a, Symbol.nonterminal Nonterminals.S, Symbol.terminal b]).mpr
+    · rw [ContextFreeRule.rewrites_iff]
       use [], []
       simp
       unfold mygrammar mysecondrule
       simp
-  have snd : mygrammar.Derives [ ( Symbol.terminal Alphabet.a ) ,
-    ( Symbol.nonterminal Nonterminals.S ),
-    ( Symbol.terminal Alphabet.b ) ] [ ( Symbol.terminal Alphabet.a ) ,
-    ( Symbol.terminal Alphabet.b ) ] := by
+  have snd : mygrammar.Derives [a, S, b] [a, b] := by
     apply ContextFreeGrammar.Produces.single
     use myfirstrule
     constructor
     · unfold mygrammar
       simp
-    · apply (ContextFreeRule.rewrites_iff [Symbol.terminal a, Symbol.nonterminal Nonterminals.S, Symbol.terminal b]
-      [Symbol.terminal a, Symbol.terminal b]).mpr
-      use [Symbol.terminal a], [Symbol.terminal b]
+    · apply (ContextFreeRule.rewrites_iff [a, S, b]
+      [a, b]).mpr
+      use [a], [b]
       unfold myfirstrule
       simp
   exact ContextFreeGrammar.Derives.trans fst snd
 
 /-- example theorem showing that aab is not in the language of the grammar S -> ε | aSb -/
-private theorem my_fourth_theorem : [a,a,b] ∉ mygrammar.language := by
+private theorem my_fourth_theorem : [.a, .a, .b] ∉ mygrammar.language := by
  sorry
 
 --#min_imports
