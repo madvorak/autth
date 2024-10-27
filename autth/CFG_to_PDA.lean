@@ -20,32 +20,30 @@ open PDA
 open ContextFreeRule.RewritesLeftmost
 
 -- In this whole section G will be the grammar we want to convert to a pda
-variable {T : Type} [DecidableEq T][Fintype T]
+variable {T : Type} [DecidableEq T] [Fintype T]
 structure Q where loop ::
 
 instance : Fintype Q where
   elems := {Q.loop}
-  complete := by intro q; simp
+  complete _ := by rw [Finset.mem_singleton]
 
 
-abbrev S (G : ContextFreeGrammar T)[Fintype G.NT] := Symbol T G.NT
+abbrev S (G : ContextFreeGrammar T) [Fintype G.NT] := Symbol T G.NT
 
-abbrev PDA' (G : ContextFreeGrammar T)[Fintype G.NT] := PDA Q T (S G)
+abbrev PDA' (G : ContextFreeGrammar T) [Fintype G.NT] := PDA Q T (S G)
 
-
-
-abbrev transition_fun (G : ContextFreeGrammar T)[Fintype G.NT] (_ : Q) (a : T) (Z : S G) : Set (Q × List (S G)) :=
+abbrev transition_fun (G : ContextFreeGrammar T) [Fintype G.NT] (_ : Q) (a : T) (Z : S G) : Set (Q × List (S G)) :=
   match Z with
   | terminal b => if a=b then {(Q.loop, [])} else {}
   | _ => ∅
 
-abbrev transition_fun' (G : ContextFreeGrammar T)[Fintype G.NT] (_ : Q) (Z : S G) : Set (Q × List (S G)) :=
+abbrev transition_fun' (G : ContextFreeGrammar T) [Fintype G.NT] (_ : Q) (Z : S G) : Set (Q × List (S G)) :=
   match Z with
   | nonterminal N => { (Q.loop, α) | (α : List (S G)) (_ : ⟨N, α⟩ ∈ G.rules) }
   | _ => ∅
 
 -- Martin: This is not a good name for a function.
-abbrev M (G : ContextFreeGrammar T)[Fintype G.NT] : PDA' G:= {
+abbrev M (G : ContextFreeGrammar T) [Fintype G.NT] : PDA' G:= {
   initial_state := Q.loop
   start_symbol := nonterminal G.initial
   final_states := ∅
@@ -54,7 +52,7 @@ abbrev M (G : ContextFreeGrammar T)[Fintype G.NT] : PDA' G:= {
 }
 
 section
-variable {G : ContextFreeGrammar T}[Fintype G.NT]
+variable {G : ContextFreeGrammar T} [Fintype G.NT]
 theorem M_consumes_terminal (a : T) (w : List T) (α : List (S G)):
     (M G).reachesN 1 ⟨Q.loop, a::w, terminal a :: α⟩ ⟨Q.loop, w, α⟩ := by
   rw [reachesN_one,step]
@@ -63,7 +61,7 @@ theorem M_consumes_terminal (a : T) (w : List T) (α : List (S G)):
   use Q.loop, []
   simp [M, CFG_to_PDA.transition_fun]
 
-theorem M_consumes_nonterminal {r : ContextFreeRule T G.NT}(h : r ∈ G.rules)(w : List T) (α : List (S G)):
+theorem M_consumes_nonterminal {r : ContextFreeRule T G.NT} (h : r ∈ G.rules) (w : List T) (α : List (S G)):
     (M G).reachesN 1 ⟨Q.loop, w, nonterminal r.input :: α⟩ ⟨Q.loop, w, r.output ++ α⟩ := by
   rw [reachesN_one]
   rcases w with _| ⟨a, w'⟩ <;> dsimp [step]
@@ -80,7 +78,7 @@ theorem M_consumes_nonterminal {r : ContextFreeRule T G.NT}(h : r ∈ G.rules)(w
     · use r.output
     · rfl
 
-theorem M_consumes_terminal_string  (w w': List T) (α : List (S G)):
+theorem M_consumes_terminal_string (w w': List T) (α : List (S G)):
     (M G).reaches ⟨Q.loop, w++w', w.map terminal ++ α⟩ ⟨Q.loop, w', α⟩ := by
   induction' w with a w ih
   · rfl
@@ -115,9 +113,8 @@ theorem M_terminal_stack_of_read (a : T) (w : List T) (α β : List (S G)):
       exfalso
       exact List.cons_ne_self _ _ hr.2.1.symm
 
-
-theorem M_deterministic_step_of_terminal_stack_cons (a: T)(w v: List T) (β β': List (S G)):
-    (M G).reachesN 1 ⟨Q.loop, w, terminal a :: β⟩ ⟨Q.loop, v, β'⟩ → w=a::v ∧ β = β' := by
+theorem M_deterministic_step_of_terminal_stack_cons (a : T) (w v : List T) (β β' : List (S G)) :
+    (M G).reachesN 1 ⟨Q.loop, w, terminal a :: β⟩ ⟨Q.loop, v, β'⟩ → w = a::v ∧ β = β' := by
   intro h
   rw [reachesN_one] at h
   rcases w with _|⟨b, w'⟩ <;>  dsimp [step, transition_fun'] at h
@@ -125,7 +122,7 @@ theorem M_deterministic_step_of_terminal_stack_cons (a: T)(w v: List T) (β β':
     exfalso
     exact (Set.mem_empty_iff_false _).mp h.1
   · rw [Set.mem_union, Set.mem_setOf,Set.mem_setOf] at h
-    rcases h with ⟨_,γ,hγ, h⟩|⟨_,γ ,hγ, h⟩
+    rcases h with ⟨_, γ, hγ, h⟩|⟨_, γ ,hγ, -⟩
     · rcases dec_em (a = b) with h'|h'<;> simp only [transition_fun, Set.mem_ite_empty_right] at hγ
       · apply conf.mk.inj at h
         rw [Set.mem_singleton_iff, Prod.mk.inj_iff] at hγ
@@ -136,9 +133,9 @@ theorem M_deterministic_step_of_terminal_stack_cons (a: T)(w v: List T) (β β':
     · exfalso
       exact (Set.not_mem_empty _) hγ
 
-theorem M_deterministic_of_terminal_stack_cons (a: T)(w : List T) (β : List (S G)):
+theorem M_deterministic_of_terminal_stack_cons (a: T) (w : List T) (β : List (S G)):
     (M G).reaches ⟨Q.loop, w, terminal a :: β⟩ ⟨Q.loop, [], []⟩ →
-    ∃w' : List T, w = a :: w' ∧ (M G).reaches ⟨Q.loop, w', β⟩ ⟨Q.loop, [], []⟩ := by
+    ∃ w' : List T, w = a :: w' ∧ (M G).reaches ⟨Q.loop, w', β⟩ ⟨Q.loop, [], []⟩ := by
   intro h
   rw [reaches_iff_reachesN] at h
   obtain ⟨n,h⟩ := h
@@ -157,7 +154,7 @@ theorem M_deterministic_of_terminal_stack_cons (a: T)(w : List T) (β : List (S 
 
 theorem M_deterministic_of_terminal_stack (w v: List T) (β  : List (S G)):
     (M G).reaches ⟨Q.loop, w, v.map terminal ++ β⟩ ⟨Q.loop, [], []⟩ →
-    ∃w' : List T,  w = v ++ w' ∧ (M G).reaches ⟨Q.loop, w', β⟩ ⟨Q.loop, [], []⟩ := by
+    ∃ w' : List T,  w = v ++ w' ∧ (M G).reaches ⟨Q.loop, w', β⟩ ⟨Q.loop, [], []⟩ := by
   intro h
   induction' v with a v' ih generalizing w
   · use w
@@ -176,7 +173,7 @@ theorem M_deterministic_of_terminal_stack (w v: List T) (β  : List (S G)):
 theorem M_reaches_off_G_derives (α : List (Symbol T G.NT)) (w : List T)
     (h : G.DerivesLeftmost α (w.map terminal)):
     (M G).reaches ⟨Q.loop, w, α⟩ ⟨Q.loop, [], []⟩ := by
-  induction' h using Relation.ReflTransGen.head_induction_on with α β hα hβ ih
+  induction' h using Relation.ReflTransGen.head_induction_on with α β hα _ ih
   case refl =>
     induction' w with a w' ih
     case nil =>
@@ -225,4 +222,6 @@ theorem G_derives_iff_M_reaches {α : List (Symbol T G.NT)} {w : List T} :
 end section
 
 
-theorem pda_of_cfg (G : ContextFreeGrammar T)[Fintype G.NT] : G.language  = (M G).acceptsByEmptyStack := by sorry
+theorem pda_of_cfg (G : ContextFreeGrammar T) [Fintype G.NT] :
+    G.language = (M G).acceptsByEmptyStack := by
+  sorry

@@ -6,7 +6,7 @@ import Mathlib.Util.Delaborators
 import Mathlib.Computability.ContextFreeGrammar
 import Mathlib.Computability.EpsilonNFA
 
-structure PDA (Q T S : Type) [Fintype Q][Fintype T][Fintype S]where
+structure PDA (Q T S : Type) [Fintype Q] [Fintype T] [Fintype S] where
   initial_state : Q
   start_symbol : S
   final_states : Set Q
@@ -15,7 +15,7 @@ structure PDA (Q T S : Type) [Fintype Q][Fintype T][Fintype S]where
 
 namespace PDA
 
-variable {Q T S : Type}[Fintype Q][Fintype T][Fintype S]
+variable {Q T S : Type} [Fintype Q] [Fintype T] [Fintype S]
 
 @[ext]
 structure conf (p : PDA Q T S) where
@@ -33,10 +33,10 @@ abbrev appendInput (r : conf pda) (x : List T) : conf pda :=
 abbrev appendStack (r : conf pda) (β : List S) : conf pda :=
   ⟨r.state, r.input, r.stack++β⟩
 
-abbrev stackPostfix' (r : conf pda) (β : List S) : Prop :=
+abbrev stackPostfix (r : conf pda) (β : List S) : Prop :=
   ∃ α : List S, r.stack = α++β
 
-abbrev stackPostfix (r : conf pda) (β : List S): Prop :=
+abbrev stackPostfixNontriv (r : conf pda) (β : List S): Prop :=
   ∃ α : List S, α.length > 0 ∧ r.stack = α++β
 
 end conf
@@ -48,9 +48,9 @@ def step (r₁ : conf pda) : Set (conf pda) :=
                           r₂ = ⟨p, w, (β ++ α)⟩ } ∪
         { r₂ : conf pda | ∃ (p : Q) (β : List S), (p,β) ∈ pda.transition_fun' q Z ∧
                           r₂ = ⟨p, a :: w, (β ++ α)⟩ }
-    | ⟨q, [], Z::α⟩ => { r₂ : conf pda | ∃ (p:Q) (β:List S), (p,β) ∈ pda.transition_fun' q Z ∧
-                                          r₂=⟨p, [], (β ++ α)⟩ }
-    | ⟨q, w, []⟩ => { r₂ : conf pda | r₂ = ⟨q,w,[]⟩ } -- Empty stack
+    | ⟨q, [], Z::α⟩ => { r₂ : conf pda | ∃ (p : Q) (β : List S), (p,β) ∈ pda.transition_fun' q Z ∧
+                                          r₂ = ⟨p, [], (β ++ α)⟩ }
+    | ⟨q, w, []⟩ => { r₂ : conf pda | r₂ = ⟨q, w, []⟩ } -- Empty stack
 
 def stepSet (R : Set (conf pda)) : Set (conf pda) :=
   ⋃ r ∈ R, step r
@@ -182,7 +182,7 @@ theorem reachesN_trans {r₃ : conf pda} {n m : ℕ} (h₁ : reachesN n r₁ r�
     linarith
     exact reachesN_of_n_one h.2 c_reaches_r₃
 
-theorem reaches_trans {r₃ : conf pda} (h₁ : reaches r₁ r₂) (h₂:reaches r₂ r₃) :
+theorem reaches_trans {r₃ : conf pda} (h₁ : reaches r₁ r₂) (h₂ : reaches r₂ r₃) :
     reaches r₁ r₃ := by
   rw [reaches] at *
   obtain ⟨n,hn⟩ := h₁
@@ -262,8 +262,8 @@ theorem unconsumed_input_one (x : List T) :
           rw [List.length_append,List.length_cons] at this
           linarith
         · assumption
-    · rwa [←List.cons_append,append_cancel] at h
-    · rwa [←List.cons_append,append_cancel] at h
+    · rwa [←List.cons_append, append_cancel] at h
+    · rwa [←List.cons_append, append_cancel] at h
 
 theorem unconsumed_input_N {n : ℕ} (x : List T) :
     reachesN n r₁ r₂ ↔ reachesN n (r₁.appendInput x) (r₂.appendInput x) := by
@@ -311,7 +311,6 @@ theorem unconsumed_input (x : List T) :
   · exact (unconsumed_input_N x).mp h'
   · exact (unconsumed_input_N x).mpr h'
 
--- Martin: This theorem is a bit sus.
 theorem reachesN_one_iff : reachesN 1 r₁ r₂ ↔
      ∃ c : ℕ → conf pda, reachesN 1 r₁ (c 0) ∧
       (∀ i < 0, reachesN 1 (c i) (c i.succ)) ∧ c 0 = r₂ := by
@@ -320,11 +319,10 @@ theorem reachesN_one_iff : reachesN 1 r₁ r₂ ↔
     use λ_↦r₂
     simpa
   · intro h
-    obtain ⟨c,h'⟩:= h
-    convert h'.1
-    tauto
+    obtain ⟨c, hr, -, hc⟩:= h
+    convert hr
+    exact hc.symm
 
--- Martin: This theorem is a bit sus.
 theorem reachesN_iff {n : ℕ} (hn : 0 < n) : reachesN n r₁ r₂ ↔
     ∃ c : ℕ → conf pda, reachesN 1 r₁ (c 0) ∧
       (∀ i < n - 1, reachesN 1 (c i) (c i.succ)) ∧ c (n-1) = r₂ := by
@@ -386,10 +384,10 @@ theorem reachesN_iff {n : ℕ} (hn : 0 < n) : reachesN n r₁ r₂ ↔
 
 theorem reachesN_zero : reachesN 0 r₁ r₂ ↔ r₁ = r₂ := by
   constructor
-  rw [reachesN,stepSetN,Set.mem_singleton_iff]
-  tauto
-  intro h
-  simp [h, reachesN,stepSetN]
+  · rw [reachesN,stepSetN,Set.mem_singleton_iff]
+    exact Eq.symm
+  · intro h
+    simp [h, reachesN, stepSetN]
 
 theorem reachesN_pos_of_not_self {n : ℕ} (h : r₁ ≠ r₂) :
     reachesN n r₁ r₂ → n > 0 := by
@@ -423,65 +421,56 @@ theorem reaches_iff (h : r₁ ≠ r₂) : reaches r₁ r₂ ↔
 
 theorem unconsumed_stack_one (hr₁s : r₁.stack ≠ []) (γ : List S) :
     reachesN 1 r₁ r₂ ↔ reachesN 1 (r₁.appendStack γ) (r₂.appendStack γ) := by
+  rcases r₁ with ⟨q,x,α⟩
+  rcases r₂ with ⟨p,y,β⟩
   constructor
-  · intro h
-    rw [reachesN_one] at *
-    rcases r₁ with ⟨q,x,α⟩
-    rcases r₂ with ⟨p,y,β⟩
-    simp [conf.appendStack] at *
-    rcases x with _|⟨a,w⟩ <;>
-    rcases α with _|⟨Z,ν⟩ <;>
-    rcases γ with _|⟨X,μ⟩ <;>
-    simp [step] at * <;> try assumption
-    · obtain ⟨p₁,beta₁,h'⟩ := h
+  <;> intro h
+  <;> rw [reachesN_one] at *
+  <;> simp [conf.appendStack] at *
+  <;> rcases x with _|⟨a,w⟩
+  <;> rcases α with _|⟨Z,ν⟩
+  <;> rcases γ with _|⟨X,μ⟩
+  <;> simp [step] at *
+  <;> try assumption
+  · obtain ⟨p₁, beta₁, h'⟩ := h
+    use p₁, beta₁
+    simp [h']
+  · rcases h with h|h
+    · left
+      obtain ⟨p₁, beta₁, h'⟩ := h
       use p₁, beta₁
       simp [h']
-    · rcases h with h|h
-      · left
-        obtain ⟨p₁,beta₁,h'⟩ := h
-        use p₁, beta₁
-        simp [h']
-      · right
-        obtain ⟨p₁,beta₁,h'⟩ := h
-        use p₁, beta₁
-        simp [h']
-  · intro h
-    rw [reachesN_one] at *
-    rcases r₁ with ⟨q,x,α⟩
-    rcases r₂ with ⟨p,y,β⟩
-    simp [conf.appendStack] at *
-    rcases x with _|⟨a,w⟩ <;>
-    rcases α with _|⟨Z,ν⟩ <;>
-    rcases γ with _|⟨X,μ⟩ <;>
-    simp [step] at * <;> try assumption
-    · rw [List.append_cons, List.append_cons ν X μ] at h
-      obtain ⟨p₁,β₁,h'⟩ := h
+    · right
+      obtain ⟨p₁, beta₁, h'⟩ := h
+      use p₁, beta₁
+      simp [h']
+  · rw [List.append_cons, List.append_cons ν X μ] at h
+    obtain ⟨p₁, β₁, h'⟩ := h
+    use p₁, β₁
+    simp [h' ]
+    have : β ++ ([X] ++ μ) = (β₁ ++ ν) ++ ([X] ++ μ) := by
+      have := h'.2.2.2
+      rw [←List.append_assoc,this]
+      simp
+    rwa [append_cancel] at this
+  · rcases h with ⟨p₁,β₁,h'⟩|⟨p₁,β₁,h'⟩
+    · left
       use p₁, β₁
-      simp [h' ]
+      use h'.1, h'.2.1, h'.2.2.1
       have : β ++ ([X] ++ μ) = (β₁ ++ ν) ++ ([X] ++ μ) := by
-        have := h'.2.2.2
-        rw [←List.append_assoc,this]
+        rw [List.append_cons _ X μ] at h'
+        rw [←List.append_assoc, h'.2.2.2]
         simp
       rwa [append_cancel] at this
-    · rcases h with ⟨p₁,β₁,h'⟩|⟨p₁,β₁,h'⟩
-      · left
-        use p₁, β₁
-        use h'.1, h'.2.1, h'.2.2.1
-        have : β ++ ([X] ++ μ) = (β₁ ++ ν) ++ ([X] ++ μ) := by
-          repeat rw [List.append_cons _ X μ] at h'
-          rw [←List.append_assoc, h'.2.2.2]
-          simp
-        rwa [append_cancel] at this
-      · right
-        use p₁, β₁
-        use h'.1, h'.2.1, h'.2.2.1
-        have : β ++ ([X] ++ μ) = (β₁ ++ ν) ++ ([X] ++ μ) := by
-          repeat rw [List.append_cons _ X μ] at h'
-          rw [←List.append_assoc, h'.2.2.2]
-          simp
-        rwa [append_cancel] at this
+    · right
+      use p₁, β₁
+      use h'.1, h'.2.1, h'.2.2.1
+      have : β ++ ([X] ++ μ) = (β₁ ++ ν) ++ ([X] ++ μ) := by
+        repeat rw [List.append_cons _ X μ] at h'
+        rw [←List.append_assoc, h'.2.2.2]
+        simp
+      rwa [append_cancel] at this
 
--- Martin: This is one of the off-vibes theorems.
 theorem unconsumed_stackN {n : ℕ} (hr₁s : r₁.stack ≠ []) (hr₂s : r₂.stack ≠ [])
     (γ : List S) :
   reachesN n r₁ r₂ ↔
