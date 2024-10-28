@@ -19,30 +19,56 @@ theorem RewritesLeftmost.exists_parts {r : ContextFreeRule T N}
     {u v : List (Symbol T N)} (hr : r.RewritesLeftmost u v) :
       ∃ (p : List T) (q : List (Symbol T N)),
         u = p.map terminal ++ [nonterminal r.input] ++ q ∧
-        v = p.map terminal ++ r.output ++ q := by sorry
+        v = p.map terminal ++ r.output ++ q := by
+  induction hr with
+  | head s =>
+    use [], s
+    simp
+  | cons x _ ih =>
+    obtain ⟨p,q,hpq⟩ := ih
+    use x::p, q
+    simp [hpq]
 
-theorem RewritesLeftmost.rewrites_leftmost_of_exists_parts {r : ContextFreeRule T N}
-    {u v : List (Symbol T N)} (hr : r.RewritesLeftmost u v) (p : List T) (q : List (Symbol T N)) :
+theorem RewritesLeftmost.rewrites_leftmost_of_exists_parts (r : ContextFreeRule T N)
+    (p : List T) (q : List (Symbol T N)) :
     r.RewritesLeftmost (p.map terminal ++ [nonterminal r.input] ++ q)
-      (p.map terminal ++ r.output ++ q) :=
-  by sorry
+      (p.map terminal ++ r.output ++ q) := by
+  induction p with
+  | nil =>
+    convert RewritesLeftmost.head q
+  | cons x p' ih =>
+    rw [List.map_cons]
+    exact cons x ih
 
 theorem RewritesLeftmost.rewrites_leftmost_iff {r : ContextFreeRule T N} {u v : List (Symbol T N)} :
     r.RewritesLeftmost u v ↔
     ∃ (p : List T) (q : List (Symbol T N)),
       u = p.map terminal ++ [nonterminal r.input] ++ q ∧
-      v = p.map terminal ++ r.output ++ q :=
-  by sorry
+      v = p.map terminal ++ r.output ++ q := by
+  constructor
+  · exact exists_parts
+  · intro h
+    obtain ⟨p,q,h⟩:=h
+    simp only [h]
+    exact rewrites_leftmost_of_exists_parts r p q
 
 theorem RewritesLeftmost.append_left {r : ContextFreeRule T N}
     {v w : List (Symbol T N)} (hr : r.RewritesLeftmost v w) (p : List T) :
-    r.RewritesLeftmost (p.map terminal ++ v) (p.map terminal ++ w) :=
-  by sorry
+    r.RewritesLeftmost (p.map terminal ++ v) (p.map terminal ++ w) := by
+  induction p with
+  | nil =>
+    simp [hr]
+  | cons x p' ih =>
+    rw [List.map_cons]
+    exact cons x ih
 
 theorem RewritesLeftmost.append_right {r : ContextFreeRule T N}
     {v w : List (Symbol T N)} (hr : r.RewritesLeftmost v w) (p : List (Symbol T N)) :
-    r.RewritesLeftmost (v ++ p) (w ++ p) :=
-  by sorry
+    r.RewritesLeftmost (v ++ p) (w ++ p) := by
+  obtain ⟨s,t,hpq⟩ := exists_parts hr
+  simp only [hpq]
+  have := rewrites_leftmost_of_exists_parts r s (t++p)
+  simp_all
 
 end ContextFreeRule
 
