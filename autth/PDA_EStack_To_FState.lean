@@ -7,23 +7,17 @@ inductive add_init_final ( π : Type ) where
   | newinit
   | newfinal
   | oldstate: π -> (add_init_final π )
+deriving Fintype
 
 open add_init_final
-
-instance : Fintype (add_init_final Q) where
-  elems := ∅ -- Stefan: I want something like: {newinit, newfinal} ∪ { (oldstate p) | p ∈ Q.univ }
-  complete := sorry
 
 -- add new start symbol to stack alphabet
 inductive add_start_symbol ( σ : Type ) where
   | newstart
   | oldsymbol : σ → ( add_start_symbol σ)
+deriving Fintype
 
 open add_start_symbol
-
-instance : Fintype (add_start_symbol S) where
-  elems := ∅ -- Stefan: I want something like: { newstart } ∪ { (oldsymbol Y) | Y ∈ S.univ }
-  complete := sorry
 
 -- Stefan: this is awful, what is a better way to do this?
 def oldinject1 ( q : Q ) : ( add_init_final Q ) := (oldstate q)
