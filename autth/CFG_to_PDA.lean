@@ -277,7 +277,7 @@ theorem pda_of_cfg (G : ContextFreeGrammar T)[Fintype G.NT] : G.language  = (M G
     dsimp [language] at h
     rw [Set.mem_setOf] at h
     dsimp [Generates] at h
-    rw [←DerivesLeftmost_iff] at h
+    rw [←derives_leftmost_iff] at h
     apply M_reaches_off_G_derives at h
     dsimp [acceptsByEmptyStack]
     use Q.loop
