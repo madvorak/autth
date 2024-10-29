@@ -80,7 +80,17 @@ theorem inject_reaches (M: PDA Q T S) (r₁ r₂: M.conf) (h: M.reaches r₁ r�
 theorem map_estackpath_to_fstatepath (M : PDA Q T S) (w: List T) (q : Q)
   (hr: M.reaches ⟨M.initial_state,w,[M.start_symbol]⟩ ⟨q,[],[]⟩):
   ∃ γ, (estack_to_fstate M).reaches ⟨newinit,w,[newstart]⟩ ⟨newfinal,[],γ⟩ := by
-  sorry -- TODONOW
+  have initstep: (estack_to_fstate M).reaches ⟨newinit,w,[newstart]⟩
+    ⟨(oldstate M.initial_state),w,[oldsymbol M.start_symbol,newstart]⟩ := by
+    sorry
+  have injpath: (estack_to_fstate M).reaches
+    ⟨(oldstate M.initial_state),w,[oldsymbol M.start_symbol,newstart]⟩
+    ⟨oldstate q,[],[newstart]⟩ := by
+    sorry -- use inject_reaches
+  have finalstep: (estack_to_fstate M).reaches ⟨oldstate q,[],[newstart]⟩ ⟨newfinal,[],[]⟩ := by
+    sorry
+  use []
+  apply reaches_trans initstep (reaches_trans injpath finalstep)
 
 theorem map_fstatepath_to_estackpath (M : PDA Q T S) (w: List T) (γ: List (add_start_symbol S)) (q: Q) (qfin : q ∈ M.final_states)
   (hr: (estack_to_fstate M).reaches ⟨newinit,w,[newstart]⟩ ⟨newfinal,[],γ⟩):
