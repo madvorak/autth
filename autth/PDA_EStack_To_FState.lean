@@ -1,5 +1,7 @@
 import autth.PDA
 
+open PDA
+
 variable {Q T S : Type} [Fintype Q] [Fintype T] [Fintype S]
 
 -- add new inital and final states
@@ -56,6 +58,59 @@ abbrev estack_to_fstate (M : PDA Q T S) : PDA (add_init_final Q) T (add_start_sy
   transition_fun' := newtransition_fun' M
 }
 
+def oldinject6 (M : PDA Q T S) (r : conf M) : (conf (estack_to_fstate M)) where
+  state := oldstate r.state
+  input := r.input
+  stack := oldinject3 r.stack
+
+/-
+theorem reaches_of_reaches' (M: PDA Q T S) (r₁ r₂: M.conf) (h: M.reaches' r₁ r₂) :
+  (M.reaches r₁ r₂) := by
+  sorry
+
+theorem reaches'_of_reaches (M: PDA Q T S) (r₁ r₂: M.conf) (h: M.reaches r₁ r₂) :
+  (M.reaches' r₁ r₂) := by
+  sorry
+ -/
+
+theorem inject_reaches (M: PDA Q T S) (r₁ r₂: M.conf) (h: M.reaches r₁ r₂) :
+ ((estack_to_fstate M).reaches (oldinject6 M r₁) (oldinject6 M r₂)) := by
+  sorry
+
+theorem map_estackpath_to_fstatepath (M : PDA Q T S) (w: List T) (q : Q)
+  (hr: M.reaches ⟨M.initial_state,w,[M.start_symbol]⟩ ⟨q,[],[]⟩):
+  ∃ γ, (estack_to_fstate M).reaches ⟨newinit,w,[newstart]⟩ ⟨newfinal,[],γ⟩ := by
+  sorry -- TODONOW
+
+theorem map_fstatepath_to_estackpath (M : PDA Q T S) (w: List T) (γ: List (add_start_symbol S)) (q: Q) (qfin : q ∈ M.final_states)
+  (hr: (estack_to_fstate M).reaches ⟨newinit,w,[newstart]⟩ ⟨newfinal,[],γ⟩):
+  ∃ q, M.reaches ⟨M.initial_state,w,[M.start_symbol]⟩ ⟨q,[],[]⟩ := by
+  sorry
+
 -- main theorem
-theorem fstate_of_estack (M : PDA Q T S) : M.acceptsByFinalState = (estack_to_fstate M).acceptsByEmptyStack := by
- sorry
+theorem fstate_of_estack (M : PDA Q T S):
+  M.acceptsByEmptyStack = (estack_to_fstate M).acceptsByFinalState := by
+  ext w
+  constructor
+  · intro h -- left-to-right inclusion
+    dsimp[acceptsByEmptyStack] at h
+    rw[Set.mem_setOf] at h
+    rcases h with ⟨ q, h ⟩
+    dsimp[acceptsByFinalState]
+    rw[Set.mem_setOf]
+    use newfinal
+    refine And.symm ⟨?h.left, rfl⟩
+    apply map_estackpath_to_fstatepath M w q
+    exact h
+  · intro h -- right-to-left inclusion
+    dsimp [acceptsByFinalState] at h
+    rw[Set.mem_setOf] at h
+    rcases h with ⟨ q, qfin, γ, h ⟩
+    rw[Set.mem_singleton_iff] at qfin
+    rw[qfin] at h
+    dsimp[acceptsByEmptyStack]
+    rw[Set.mem_setOf]
+    apply map_fstatepath_to_estackpath M w γ -- Stefan: something weird is going on here... where do goals 1 and 3 come from?
+    · sorry
+    · exact h
+    · sorry

@@ -61,6 +61,7 @@ def stepSetN (n : ℕ) (R : Set (conf pda))  : Set (conf pda) :=
   | Nat.succ m => stepSet (stepSetN m R)
 
 -- Martin: Could you use?
+-- Stefan: I agree that an inductive definition like that of reaches' would be more natural.
 #check Relation.ReflTransGen
 inductive reaches' : conf pda → conf pda → Prop :=
   | base : (r₁ : conf pda) → reaches' r₁ r₁
