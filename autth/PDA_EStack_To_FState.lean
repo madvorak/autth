@@ -11,7 +11,7 @@ inductive add_init_final ( π : Type ) where
 open add_init_final
 
 instance : Fintype (add_init_final Q) where
-  elems := { newinit } --, newfinal } ∪ old?
+  elems := ∅ -- Stefan: I want something like: {newinit, newfinal} ∪ { (oldstate p) | p ∈ Q.univ }
   complete := sorry
 
 -- add new start symbol to stack alphabet
@@ -22,7 +22,7 @@ inductive add_start_symbol ( σ : Type ) where
 open add_start_symbol
 
 instance : Fintype (add_start_symbol S) where
-  elems := { newstart } -- ∪ old?
+  elems := ∅ -- Stefan: I want something like: { newstart } ∪ { (oldsymbol Y) | Y ∈ S.univ }
   complete := sorry
 
 -- Stefan: this is awful, what is a better way to do this?
@@ -52,7 +52,6 @@ abbrev newtransition_fun (M : PDA Q T S) (q : (add_init_final Q)) (a : T) (Z : (
       | newstart => ∅
       | (oldsymbol Y) => (oldinject5 (M.transition_fun p a Y))
     | newfinal => ∅
-
 
 -- define translation function of PDAs
 abbrev estack_to_fstate (M : PDA Q T S) : PDA (add_init_final Q) T (add_start_symbol S) := {
